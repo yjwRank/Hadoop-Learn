@@ -13,6 +13,8 @@
  */
 package org.apache.hadoop.security.authentication.client;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.security.authentication.server.AuthenticationFilter;
 
 import java.io.IOException;
@@ -66,6 +68,7 @@ public class AuthenticatedURL {
 
   private static final String AUTH_COOKIE_EQ = AUTH_COOKIE + "=";
 
+  public static final Log LOG= LogFactory.getLog(AuthenticatedURL.class);
   /**
    * Client side authentication token.
    */
@@ -77,6 +80,7 @@ public class AuthenticatedURL {
      * Creates a token.
      */
     public Token() {
+      LOG.info("dog----Constructor null");
     }
 
     /**
@@ -85,6 +89,7 @@ public class AuthenticatedURL {
      * @param tokenStr string representation of the tokenStr.
      */
     public Token(String tokenStr) {
+      LOG.info("dog----Constructor tokenStr:"+tokenStr);
       if (tokenStr == null) {
         throw new IllegalArgumentException("tokenStr cannot be null");
       }
@@ -97,6 +102,7 @@ public class AuthenticatedURL {
      * @return if a token from the server has been set.
      */
     public boolean isSet() {
+      LOG.info("dog----token?:"+token!=null);
       return token != null;
     }
 
@@ -130,6 +136,7 @@ public class AuthenticatedURL {
    * @param authenticator the authenticator class to use as default.
    */
   public static void setDefaultAuthenticator(Class<? extends Authenticator> authenticator) {
+    LOG.info("dog----authenticator:"+authenticator);
     DEFAULT_AUTHENTICATOR = authenticator;
   }
 
@@ -140,6 +147,7 @@ public class AuthenticatedURL {
    * @return the authenticator class to use as default.
    */
   public static Class<? extends Authenticator> getDefaultAuthenticator() {
+    LOG.info("dog----DEFAULT_AUTHENTICATOR:"+DEFAULT_AUTHENTICATOR);
     return DEFAULT_AUTHENTICATOR;
   }
 
@@ -151,6 +159,7 @@ public class AuthenticatedURL {
    */
   public AuthenticatedURL() {
     this(null);
+    LOG.info("dog----Constructor null");
   }
 
   /**
@@ -161,6 +170,7 @@ public class AuthenticatedURL {
    */
   public AuthenticatedURL(Authenticator authenticator) {
     this(authenticator, null);
+    LOG.info("dog----Constructor authenticator:"+authenticator.toString());
   }
 
   /**
@@ -172,6 +182,7 @@ public class AuthenticatedURL {
    */
   public AuthenticatedURL(Authenticator authenticator,
                           ConnectionConfigurator connConfigurator) {
+    LOG.info("dog----Constructor authenticator:"+authenticator+"  connConfigurator:"+connConfigurator);
     try {
       this.authenticator = (authenticator != null) ? authenticator : DEFAULT_AUTHENTICATOR.newInstance();
     } catch (Exception ex) {
@@ -188,6 +199,7 @@ public class AuthenticatedURL {
    * @return the {@link Authenticator} instance
    */
   protected Authenticator getAuthenticator() {
+    LOG.info("dog----getAuthenticator:"+authenticator);
     return authenticator;
   }
 
@@ -203,6 +215,7 @@ public class AuthenticatedURL {
    * @throws AuthenticationException if an authentication exception occurred.
    */
   public HttpURLConnection openConnection(URL url, Token token) throws IOException, AuthenticationException {
+    LOG.info("dog----URL:"+url+" token:"+token);
     if (url == null) {
       throw new IllegalArgumentException("url cannot be NULL");
     }
@@ -228,6 +241,7 @@ public class AuthenticatedURL {
    * @param token authentication token to inject.
    */
   public static void injectToken(HttpURLConnection conn, Token token) {
+    LOG.info("dog----conn:"+conn+" token:"+token+" t:"+token.token);
     String t = token.token;
     if (t != null) {
       if (!t.startsWith("\"")) {
@@ -249,12 +263,14 @@ public class AuthenticatedURL {
    * @throws AuthenticationException if an authentication exception occurred.
    */
   public static void extractToken(HttpURLConnection conn, Token token) throws IOException, AuthenticationException {
+    LOG.info("dog----conn:"+conn+" token:"+token);
     int respCode = conn.getResponseCode();
     if (respCode == HttpURLConnection.HTTP_OK
-        || respCode == HttpURLConnection.HTTP_CREATED
-        || respCode == HttpURLConnection.HTTP_ACCEPTED) {
+            || respCode == HttpURLConnection.HTTP_CREATED
+            || respCode == HttpURLConnection.HTTP_ACCEPTED) {
       Map<String, List<String>> headers = conn.getHeaderFields();
       List<String> cookies = headers.get("Set-Cookie");
+      LOG.info("dog----respCode:"+respCode+" header:"+headers+" cookeis:"+cookies);
       if (cookies != null) {
         for (String cookie : cookies) {
           if (cookie.startsWith(AUTH_COOKIE_EQ)) {
@@ -272,7 +288,7 @@ public class AuthenticatedURL {
     } else {
       token.set(null);
       throw new AuthenticationException("Authentication failed, status: " + conn.getResponseCode() +
-                                        ", message: " + conn.getResponseMessage());
+              ", message: " + conn.getResponseMessage());
     }
   }
 

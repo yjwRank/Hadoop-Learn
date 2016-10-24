@@ -13,6 +13,9 @@
  */
 package org.apache.hadoop.security.authentication.client;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -24,7 +27,7 @@ import java.net.URL;
  * The 'user.name' value is propagated using an additional query string parameter {@link #USER_NAME} ('user.name').
  */
 public class PseudoAuthenticator implements Authenticator {
-
+  public static final Log LOG= LogFactory.getLog(PseudoAuthenticator.class);
   /**
    * Name of the additional parameter that carries the 'user.name' value.
    */
@@ -42,6 +45,7 @@ public class PseudoAuthenticator implements Authenticator {
    */
   @Override
   public void setConnectionConfigurator(ConnectionConfigurator configurator) {
+    LOG.info("dog----configurator:"+configurator);
     connConfigurator = configurator;
   }
 
@@ -75,6 +79,8 @@ public class PseudoAuthenticator implements Authenticator {
     conn.setRequestMethod("OPTIONS");
     conn.connect();
     AuthenticatedURL.extractToken(conn, token);
+    LOG.info("dog----strUrl:"+url+"  conn:"+conn.toString()+" token:"+token.toString());
+    LOG.info("dog----paramSeparator:"+paramSeparator);
   }
 
   /**
@@ -84,7 +90,9 @@ public class PseudoAuthenticator implements Authenticator {
    *
    * @return the current user name.
    */
-  protected String getUserName() {
+  protected String getUserName()
+  {
+    LOG.info("dog----user.name:"+System.getProperty("user.name"));
     return System.getProperty("user.name");
   }
 }

@@ -28,7 +28,7 @@ public interface ConnectionConfigurator {
    *
    * @param conn the {@link HttpURLConnection} instance to configure.
    * @return the configured {@link HttpURLConnection} instance.
-   * 
+   *
    * @throws IOException if an IO error occurred.
    */
   public HttpURLConnection configure(HttpURLConnection conn) throws IOException;

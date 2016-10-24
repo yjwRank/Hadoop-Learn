@@ -17,7 +17,7 @@ package org.apache.hadoop.security.authentication.client;
  * Exception thrown when an authentication error occurrs.
  */
 public class AuthenticationException extends Exception {
-  
+
   static final long serialVersionUID = 0;
 
   /**

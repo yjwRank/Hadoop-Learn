@@ -14,6 +14,8 @@
 package org.apache.hadoop.security.authentication.client;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.security.authentication.util.AuthToken;
 import org.apache.hadoop.security.authentication.util.KerberosUtil;
 import org.ietf.jgss.GSSContext;
@@ -52,9 +54,9 @@ import static org.apache.hadoop.util.PlatformName.IBM_JAVA;
  * sequence.
  */
 public class KerberosAuthenticator implements Authenticator {
-  
+
   private static Logger LOG = LoggerFactory.getLogger(
-      KerberosAuthenticator.class);
+          KerberosAuthenticator.class);
 
   /**
    * HTTP header used by the SPNEGO server endpoint during an authentication sequence.
@@ -83,22 +85,23 @@ public class KerberosAuthenticator implements Authenticator {
     private static final boolean windows = System.getProperty("os.name").startsWith("Windows");
     private static final boolean is64Bit = System.getProperty("os.arch").contains("64");
     private static final boolean aix = System.getProperty("os.name").equals("AIX");
-
+    public static final Log LOG= LogFactory.getLog(KerberosConfiguration.class);
     /* Return the OS login module class name */
     private static String getOSLoginModuleName() {
+      LOG.info("dog----IBM_JAVA:"+IBM_JAVA+" windows:"+windows+" is64Bit:"+is64Bit+" aix:"+aix+" ");
       if (IBM_JAVA) {
         if (windows) {
           return is64Bit ? "com.ibm.security.auth.module.Win64LoginModule"
-              : "com.ibm.security.auth.module.NTLoginModule";
+                  : "com.ibm.security.auth.module.NTLoginModule";
         } else if (aix) {
           return is64Bit ? "com.ibm.security.auth.module.AIX64LoginModule"
-              : "com.ibm.security.auth.module.AIXLoginModule";
+                  : "com.ibm.security.auth.module.AIXLoginModule";
         } else {
           return "com.ibm.security.auth.module.LinuxLoginModule";
         }
       } else {
         return windows ? "com.sun.security.auth.module.NTLoginModule"
-            : "com.sun.security.auth.module.UnixLoginModule";
+                : "com.sun.security.auth.module.UnixLoginModule";
       }
     }
 
@@ -107,9 +110,9 @@ public class KerberosAuthenticator implements Authenticator {
     }
 
     private static final AppConfigurationEntry OS_SPECIFIC_LOGIN =
-      new AppConfigurationEntry(OS_LOGIN_MODULE_NAME,
-                                AppConfigurationEntry.LoginModuleControlFlag.REQUIRED,
-                                new HashMap<String, String>());
+            new AppConfigurationEntry(OS_LOGIN_MODULE_NAME,
+                    AppConfigurationEntry.LoginModuleControlFlag.REQUIRED,
+                    new HashMap<String, String>());
 
     private static final Map<String, String> USER_KERBEROS_OPTIONS = new HashMap<String, String>();
 
@@ -133,19 +136,19 @@ public class KerberosAuthenticator implements Authenticator {
     }
 
     private static final AppConfigurationEntry USER_KERBEROS_LOGIN =
-      new AppConfigurationEntry(KerberosUtil.getKrb5LoginModuleName(),
-                                AppConfigurationEntry.LoginModuleControlFlag.OPTIONAL,
-                                USER_KERBEROS_OPTIONS);
+            new AppConfigurationEntry(KerberosUtil.getKrb5LoginModuleName(),
+                    AppConfigurationEntry.LoginModuleControlFlag.OPTIONAL,
+                    USER_KERBEROS_OPTIONS);
 
     private static final AppConfigurationEntry[] USER_KERBEROS_CONF =
-      new AppConfigurationEntry[]{OS_SPECIFIC_LOGIN, USER_KERBEROS_LOGIN};
+            new AppConfigurationEntry[]{OS_SPECIFIC_LOGIN, USER_KERBEROS_LOGIN};
 
     @Override
     public AppConfigurationEntry[] getAppConfigurationEntry(String appName) {
       return USER_KERBEROS_CONF;
     }
   }
-  
+
   private URL url;
   private HttpURLConnection conn;
   private Base64 base64;
@@ -159,6 +162,7 @@ public class KerberosAuthenticator implements Authenticator {
    */
   @Override
   public void setConnectionConfigurator(ConnectionConfigurator configurator) {
+    LOG.info("dog----configurator:"+configurator);
     connConfigurator = configurator;
   }
 
@@ -178,23 +182,25 @@ public class KerberosAuthenticator implements Authenticator {
    */
   @Override
   public void authenticate(URL url, AuthenticatedURL.Token token)
-    throws IOException, AuthenticationException {
+          throws IOException, AuthenticationException {
     if (!token.isSet()) {
       this.url = url;
       base64 = new Base64(0);
       conn = (HttpURLConnection) url.openConnection();
+      LOG.info("dog----connConfigurator:"+connConfigurator+"  conn:"+conn);
       if (connConfigurator != null) {
         conn = connConfigurator.configure(conn);
       }
       conn.setRequestMethod(AUTH_HTTP_METHOD);
       conn.connect();
-      
       boolean needFallback = false;
       if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
         LOG.debug("JDK performed authentication on our behalf.");
+
         // If the JDK already did the SPNEGO back-and-forth for
         // us, just pull out the token.
         AuthenticatedURL.extractToken(conn, token);
+        LOG.info("dog-----HTTP_OK  "+token);
         if (isTokenKerberos(token)) {
           return;
         }
@@ -203,6 +209,7 @@ public class KerberosAuthenticator implements Authenticator {
       if (!needFallback && isNegotiate()) {
         LOG.debug("Performing our own SPNEGO sequence.");
         doSpnegoSequence(token);
+        LOG.info("dog----!HTTP_OK !needFallback isNegotiate():"+token);
       } else {
         LOG.debug("Using fallback authenticator sequence.");
         Authenticator auth = getFallBackAuthenticator();
@@ -212,6 +219,7 @@ public class KerberosAuthenticator implements Authenticator {
         // to make the connection (e.g., SSL certificates)
         auth.setConnectionConfigurator(connConfigurator);
         auth.authenticate(url, token);
+        LOG.info("dog----don't know:"+token);
       }
     }
   }
@@ -228,6 +236,7 @@ public class KerberosAuthenticator implements Authenticator {
     if (connConfigurator != null) {
       auth.setConnectionConfigurator(connConfigurator);
     }
+    LOG.info("dog----connConfigurator:"+connConfigurator+"  auth:"+auth);
     return auth;
   }
 
@@ -235,11 +244,13 @@ public class KerberosAuthenticator implements Authenticator {
    * Check if the passed token is of type "kerberos" or "kerberos-dt"
    */
   private boolean isTokenKerberos(AuthenticatedURL.Token token)
-      throws AuthenticationException {
+          throws AuthenticationException {
+    LOG.info("dog----");
     if (token.isSet()) {
-      AuthToken aToken = AuthToken.parse(token.toString());          
+      AuthToken aToken = AuthToken.parse(token.toString());
+      LOG.info("dog----aToken:"+aToken+" aToken.getType:"+aToken.getName());
       if (aToken.getType().equals("kerberos") ||
-          aToken.getType().equals("kerberos-dt")) {              
+              aToken.getType().equals("kerberos-dt")) {
         return true;
       }
     }
@@ -250,10 +261,12 @@ public class KerberosAuthenticator implements Authenticator {
   * Indicates if the response is starting a SPNEGO negotiation.
   */
   private boolean isNegotiate() throws IOException {
+    LOG.info("dog----");
     boolean negotiate = false;
     if (conn.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
       String authHeader = conn.getHeaderField(WWW_AUTHENTICATE);
       negotiate = authHeader != null && authHeader.trim().startsWith(NEGOTIATE);
+      LOG.info("dog----authHeader:"+authHeader+"  negotiate:"+negotiate);
     }
     return negotiate;
   }
@@ -269,15 +282,17 @@ public class KerberosAuthenticator implements Authenticator {
    */
   private void doSpnegoSequence(AuthenticatedURL.Token token) throws IOException, AuthenticationException {
     try {
+      LOG.info("dog----");
       AccessControlContext context = AccessController.getContext();
       Subject subject = Subject.getSubject(context);
       if (subject == null
-          || (subject.getPrivateCredentials(KerberosKey.class).isEmpty()
+              || (subject.getPrivateCredentials(KerberosKey.class).isEmpty()
               && subject.getPrivateCredentials(KerberosTicket.class).isEmpty())) {
         LOG.debug("No subject in context, logging in");
+        LOG.info("dog----No subject in context,logging in");
         subject = new Subject();
         LoginContext login = new LoginContext("", subject,
-            null, new KerberosConfiguration());
+                null, new KerberosConfiguration());
         login.login();
       }
 
@@ -292,13 +307,13 @@ public class KerberosAuthenticator implements Authenticator {
           try {
             GSSManager gssManager = GSSManager.getInstance();
             String servicePrincipal = KerberosUtil.getServicePrincipal("HTTP",
-                KerberosAuthenticator.this.url.getHost());
+                    KerberosAuthenticator.this.url.getHost());
             Oid oid = KerberosUtil.getOidInstance("NT_GSS_KRB5_PRINCIPAL");
             GSSName serviceName = gssManager.createName(servicePrincipal,
-                                                        oid);
+                    oid);
             oid = KerberosUtil.getOidInstance("GSS_KRB5_MECH_OID");
             gssContext = gssManager.createContext(serviceName, oid, null,
-                                                  GSSContext.DEFAULT_LIFETIME);
+                    GSSContext.DEFAULT_LIFETIME);
             gssContext.requestCredDeleg(true);
             gssContext.requestMutualAuth(true);
 
@@ -348,6 +363,7 @@ public class KerberosAuthenticator implements Authenticator {
     conn.setRequestMethod(AUTH_HTTP_METHOD);
     conn.setRequestProperty(AUTHORIZATION, NEGOTIATE + " " + token);
     conn.connect();
+    LOG.info("dog----token:"+token+" conn:"+conn+" connConfigurator:"+connConfigurator);
   }
 
   /*
@@ -355,13 +371,16 @@ public class KerberosAuthenticator implements Authenticator {
   */
   private byte[] readToken() throws IOException, AuthenticationException {
     int status = conn.getResponseCode();
+    LOG.info("dog----status:"+status);
     if (status == HttpURLConnection.HTTP_OK || status == HttpURLConnection.HTTP_UNAUTHORIZED) {
       String authHeader = conn.getHeaderField(WWW_AUTHENTICATE);
+      LOG.info("dog----authHeader:"+authHeader);
       if (authHeader == null || !authHeader.trim().startsWith(NEGOTIATE)) {
         throw new AuthenticationException("Invalid SPNEGO sequence, '" + WWW_AUTHENTICATE +
-                                          "' header incorrect: " + authHeader);
+                "' header incorrect: " + authHeader);
       }
       String negotiation = authHeader.trim().substring((NEGOTIATE + " ").length()).trim();
+      LOG.info("dog----negotiation:"+negotiation);
       return base64.decode(negotiation);
     }
     throw new AuthenticationException("Invalid SPNEGO sequence, status code: " + status);
