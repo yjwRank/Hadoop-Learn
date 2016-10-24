@@ -19,6 +19,9 @@ import java.util.Properties;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.security.authentication.client.AuthenticationException;
 
  /**
@@ -32,7 +35,7 @@ import org.apache.hadoop.security.authentication.client.AuthenticationException;
  */
 public abstract class AltKerberosAuthenticationHandler
                         extends KerberosAuthenticationHandler {
-
+  public static final Log LOG= LogFactory.getLog(AltKerberosAuthenticationHandler.class);
   /**
    * Constant that identifies the authentication mechanism.
    */
@@ -72,6 +75,9 @@ public abstract class AltKerberosAuthenticationHandler
         nonBrowserUserAgents[i] =
             nonBrowserUserAgents[i].toLowerCase(Locale.ENGLISH);
     }
+
+    LOG.info("dog----nonBrowserUserAgents:"+nonBrowserUserAgents.toString());
+
   }
 
   /**
@@ -94,11 +100,14 @@ public abstract class AltKerberosAuthenticationHandler
       HttpServletResponse response)
       throws IOException, AuthenticationException {
     AuthenticationToken token;
+    LOG.info("dog----request:"+request+"  respons:"+response);
     if (isBrowser(request.getHeader("User-Agent"))) {
       token = alternateAuthenticate(request, response);
+      LOG.info("dog----isBrowser token:"+token);
     }
     else {
       token = super.authenticate(request, response);
+      LOG.info("dog----!isBrowser token:"+token);
     }
     return token;
   }
@@ -119,6 +128,7 @@ public abstract class AltKerberosAuthenticationHandler
    * @return true if the User-Agent String refers to a browser, false if not
    */
   protected boolean isBrowser(String userAgent) {
+    LOG.info("dog----userAgent:"+userAgent+"  nonBrowserUserAgents:"+nonBrowserUserAgents.toString());
     if (userAgent == null) {
       return false;
     }
