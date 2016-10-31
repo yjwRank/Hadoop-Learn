@@ -95,6 +95,7 @@ public class KerberosName {
    * @param name full Kerberos principal name.
    */
   public KerberosName(String name) {
+    LOG.info("dog----name:"+name);
     Matcher match = nameParser.matcher(name);
     if (!match.matches()) {
       if (name.contains("@")) {
@@ -116,6 +117,7 @@ public class KerberosName {
    * @return the default realm from the krb5.conf
    */
   public String getDefaultRealm() {
+    LOG.info("dog----defaultRealm:"+defaultRealm);
     return defaultRealm;
   }
 
@@ -134,6 +136,7 @@ public class KerberosName {
       result.append('@');
       result.append(realm);
     }
+    LOG.info("dog----result:"+result.toString()+" serviceName:"+serviceName+" hostName:"+hostName+" realm:"+realm);
     return result.toString();
   }
 
@@ -142,6 +145,7 @@ public class KerberosName {
    * @return the first section of the Kerberos principal name
    */
   public String getServiceName() {
+    LOG.info("dog----serviceName:"+serviceName);
     return serviceName;
   }
 
@@ -150,6 +154,7 @@ public class KerberosName {
    * @return the second section of the Kerberos principal name, and may be null
    */
   public String getHostName() {
+    LOG.info("dog----hostName:"+hostName);
     return hostName;
   }
 
@@ -158,6 +163,7 @@ public class KerberosName {
    * @return the realm of the name, may be null
    */
   public String getRealm() {
+    LOG.info("dog----realm:"+realm);
     return realm;
   }
 
@@ -323,6 +329,7 @@ public class KerberosName {
   }
 
   static List<Rule> parseRules(String rules) {
+    LOG.info("dog----name:"+rules);
     List<Rule> result = new ArrayList<Rule>();
     String remaining = rules.trim();
     while (remaining.length() > 0) {
@@ -371,6 +378,7 @@ public class KerberosName {
    */
   public String getShortName() throws IOException {
     String[] params;
+    LOG.info("dog----getShortName");
     if (hostName == null) {
       // if it is already simple, just return it
       if (realm == null) {
@@ -383,6 +391,7 @@ public class KerberosName {
     for(Rule r: rules) {
       String result = r.apply(params);
       if (result != null) {
+        LOG.info("dog----result:"+result);
         return result;
       }
     }
@@ -395,6 +404,7 @@ public class KerberosName {
    */
   public static void setRules(String ruleString) {
     rules = (ruleString != null) ? parseRules(ruleString) : null;
+    LOG.info("dog----ruleString:"+ruleString+" rules:"+rules);
   }
 
   /**
@@ -402,6 +412,7 @@ public class KerberosName {
    * @return String of configured rules, or null if not yet configured
    */
   public static String getRules() {
+    LOG.info("dog----rules:"+rules);
     String ruleString = null;
     if (rules != null) {
       StringBuilder sb = new StringBuilder();
@@ -410,6 +421,7 @@ public class KerberosName {
       }
       ruleString = sb.toString().trim();
     }
+    LOG.info("dog----ruleString:"+ruleString);
     return ruleString;
   }
   
@@ -419,6 +431,7 @@ public class KerberosName {
    * @return if the name rules have been set.
    */
   public static boolean hasRulesBeenSet() {
+    LOG.info("dog----hadRulesBeenSet:"+(rules!=null));
     return rules != null;
   }
   

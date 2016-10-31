@@ -33,15 +33,18 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.directory.server.kerberos.shared.keytab.Keytab;
 import org.apache.directory.server.kerberos.shared.keytab.KeytabEntry;
 import org.ietf.jgss.GSSException;
 import org.ietf.jgss.Oid;
 
 public class KerberosUtil {
-
+  public static final Log LOG= LogFactory.getLog(KerberosUtil.class);
   /* Return the Kerberos login module name */
   public static String getKrb5LoginModuleName() {
+    LOG.info("dog----System.getProperty:"+System.getProperty("java.vender"));
     return System.getProperty("java.vendor").contains("IBM")
       ? "com.ibm.security.auth.module.Krb5LoginModule"
       : "com.sun.security.auth.module.Krb5LoginModule";
@@ -51,16 +54,20 @@ public class KerberosUtil {
       throws ClassNotFoundException, GSSException, NoSuchFieldException,
       IllegalAccessException {
     Class<?> oidClass;
+    LOG.info("dog----IBM_JAVA"+IBM_JAVA);
     if (IBM_JAVA) {
       if ("NT_GSS_KRB5_PRINCIPAL".equals(oidName)) {
         // IBM JDK GSSUtil class does not have field for krb5 principal oid
+        LOG.info("dog----new OID");
         return new Oid("1.2.840.113554.1.2.2.1");
       }
       oidClass = Class.forName("com.ibm.security.jgss.GSSUtil");
     } else {
+
       oidClass = Class.forName("sun.security.jgss.GSSUtil");
     }
     Field oidField = oidClass.getDeclaredField(oidName);
+    LOG.info("dog----oidName:"+oidName);
     return (Oid)oidField.get(oidClass);
   }
 
@@ -72,6 +79,7 @@ public class KerberosUtil {
     Class<?> classRef;
     Method getInstanceMethod;
     Method getDefaultRealmMethod;
+    LOG.info("dog----System.getProperty:"+System.getProperty("java.vender"));
     if (System.getProperty("java.vendor").contains("IBM")) {
       classRef = Class.forName("com.ibm.security.krb5.internal.Config");
     } else {
@@ -86,6 +94,7 @@ public class KerberosUtil {
   
   /* Return fqdn of the current host */
   static String getLocalHostName() throws UnknownHostException {
+    LOG.info("dog----getLocalHostName:"+InetAddress.getLocalHost().getCanonicalHostName());
     return InetAddress.getLocalHost().getCanonicalHostName();
   }
   
@@ -105,11 +114,13 @@ public class KerberosUtil {
   public static final String getServicePrincipal(String service, String hostname)
       throws UnknownHostException {
     String fqdn = hostname;
+    LOG.info("dog----service:"+service+" hostname:"+hostname);
     if (null == fqdn || fqdn.equals("") || fqdn.equals("0.0.0.0")) {
       fqdn = getLocalHostName();
     }
     // convert hostname to lowercase as kerberos does not work with hostnames
     // with uppercase characters.
+    LOG.info("dog----service****"+service + "/" + fqdn.toLowerCase(Locale.ENGLISH));
     return service + "/" + fqdn.toLowerCase(Locale.ENGLISH);
   }
 
@@ -125,10 +136,12 @@ public class KerberosUtil {
   static final String[] getPrincipalNames(String keytabFileName) throws IOException {
       Keytab keytab = Keytab.read(new File(keytabFileName));
       Set<String> principals = new HashSet<String>();
+      LOG.info("dog----keytableFileName:"+keytabFileName);
       List<KeytabEntry> entries = keytab.getEntries();
       for (KeytabEntry entry: entries){
         principals.add(entry.getPrincipalName().replace("\\", "/"));
       }
+      LOG.info("dog----principals:"+principals.toString());
       return principals.toArray(new String[0]);
     }
 
@@ -143,6 +156,7 @@ public class KerberosUtil {
   public static final String[] getPrincipalNames(String keytab,
       Pattern pattern) throws IOException {
     String[] principals = getPrincipalNames(keytab);
+    LOG.info("dog----principals:"+principals.toString());
     if (principals.length != 0) {
       List<String> matchingPrincipals = new ArrayList<String>();
       for (String principal : principals) {
@@ -152,6 +166,7 @@ public class KerberosUtil {
       }
       principals = matchingPrincipals.toArray(new String[0]);
     }
+    LOG.info("dog----!1principals:"+principals.toString());
     return principals;
   }
 }

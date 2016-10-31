@@ -13,6 +13,8 @@
  */
 package org.apache.hadoop.security.authentication.util;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.security.authentication.client.AuthenticationException;
 
 import java.security.Principal;
@@ -27,10 +29,10 @@ import java.util.StringTokenizer;
  */
 public class AuthToken implements Principal {
 
+  public static final Log LOG= LogFactory.getLog(AuthToken.class);
   /**
    * Constant that identifies an anonymous request.
    */
-
   private static final String ATTR_SEPARATOR = "&";
   private static final String USER_NAME = "u";
   private static final String PRINCIPAL = "p";
@@ -47,6 +49,7 @@ public class AuthToken implements Principal {
   private String tokenStr;
 
   protected AuthToken() {
+    LOG.info("dog----protected");
     userName = null;
     principal = null;
     type = null;
@@ -74,6 +77,7 @@ public class AuthToken implements Principal {
     this.principal = principal;
     this.type = type;
     this.expires = -1;
+    LOG.info("dog----userName:"+userName+" principal:"+principal+" type:"+type);
   }
   
   /**
@@ -83,6 +87,7 @@ public class AuthToken implements Principal {
    * @param name the parameter name to use in an error message if the value is invalid.
    */
   protected static void checkForIllegalArgument(String value, String name) {
+    LOG.info("dog----value:"+value+" name:"+name);
     if (value == null || value.length() == 0 || value.contains(ATTR_SEPARATOR)) {
       throw new IllegalArgumentException(name + ILLEGAL_ARG_MSG);
     }
@@ -95,6 +100,7 @@ public class AuthToken implements Principal {
    */
   public void setExpires(long expires) {
     this.expires = expires;
+    LOG.info("dog----expires:"+expires);
       generateToken();
   }
 
@@ -117,6 +123,7 @@ public class AuthToken implements Principal {
     sb.append(TYPE).append("=").append(getType()).append(ATTR_SEPARATOR);
     sb.append(EXPIRES).append("=").append(getExpires());
     tokenStr = sb.toString();
+    LOG.info("dog----tokenStr:"+tokenStr);
   }
 
   /**
@@ -125,6 +132,7 @@ public class AuthToken implements Principal {
    * @return the user name.
    */
   public String getUserName() {
+    LOG.info("dog----userName:"+userName);
     return userName;
   }
 
@@ -135,6 +143,7 @@ public class AuthToken implements Principal {
    */
   @Override
   public String getName() {
+    LOG.info("dog----principal:"+principal);
     return principal;
   }
 
@@ -144,6 +153,7 @@ public class AuthToken implements Principal {
    * @return the authentication mechanism of the token.
    */
   public String getType() {
+    LOG.info("dog----type:"+type);
     return type;
   }
 
@@ -153,6 +163,7 @@ public class AuthToken implements Principal {
    * @return the expiration time of the token, in milliseconds since Epoc.
    */
   public long getExpires() {
+    LOG.info("dog----expires:"+expires);
     return expires;
   }
 
@@ -165,10 +176,12 @@ public class AuthToken implements Principal {
    */
   @Override
   public String toString() {
+    LOG.info("dog----tokenStr:"+tokenStr);
     return tokenStr;
   }
 
   public static AuthToken parse(String tokenStr) throws AuthenticationException {
+    LOG.info("dog----tokenStr:"+tokenStr);
     if (tokenStr.length() >= 2) {
       // strip the \" at the two ends of the tokenStr
       if (tokenStr.charAt(0) == '\"' &&

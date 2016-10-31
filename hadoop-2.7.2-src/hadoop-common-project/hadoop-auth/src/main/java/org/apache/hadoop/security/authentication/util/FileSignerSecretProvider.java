@@ -14,6 +14,8 @@
 package org.apache.hadoop.security.authentication.util;
 
 import com.google.common.base.Charsets;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.security.authentication.server.AuthenticationFilter;
@@ -30,7 +32,7 @@ import java.util.Properties;
 @InterfaceStability.Unstable
 @InterfaceAudience.Private
 public class FileSignerSecretProvider extends SignerSecretProvider {
-
+  public static final Log LOG= LogFactory.getLog(FileSignerSecretProvider.class);
   private byte[] secret;
   private byte[][] secrets;
 
@@ -42,7 +44,7 @@ public class FileSignerSecretProvider extends SignerSecretProvider {
 
     String signatureSecretFile = config.getProperty(
         AuthenticationFilter.SIGNATURE_SECRET_FILE, null);
-
+    LOG.info("dog----signatureSecretFile:"+signatureSecretFile+" tokenValidity:"+tokenValidity);
     Reader reader = null;
     if (signatureSecretFile != null) {
       try {
@@ -55,6 +57,7 @@ public class FileSignerSecretProvider extends SignerSecretProvider {
           c = reader.read();
         }
         secret = sb.toString().getBytes(Charset.forName("UTF-8"));
+        LOG.info("dog----secret:"+sb.toString());
       } catch (IOException ex) {
         throw new RuntimeException("Could not read signature secret file: " +
             signatureSecretFile);
@@ -74,11 +77,13 @@ public class FileSignerSecretProvider extends SignerSecretProvider {
 
   @Override
   public byte[] getCurrentSecret() {
+    LOG.info("dog----secret:"+String.valueOf(secret));
     return secret;
   }
 
   @Override
   public byte[][] getAllSecrets() {
+    LOG.info("dog---secrets:"+String.valueOf(secrets));
     return secrets;
   }
 }
