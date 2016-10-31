@@ -154,6 +154,7 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
    */
   public KerberosAuthenticationHandler() {
     this(TYPE);
+    LOG.info("dog----default TYPE:"+TYPE);
   }
 
   /**
@@ -164,6 +165,7 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
    */
   public KerberosAuthenticationHandler(String type) {
     this.type = type;
+    LOG.info("dog----type："+type);
   }
 
   /**
@@ -179,12 +181,15 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
    */
   @Override
   public void init(Properties config) throws ServletException {
+    LOG.info("dog----init");
     try {
       String principal = config.getProperty(PRINCIPAL);
+      LOG.info("dog----principal:"+principal);
       if (principal == null || principal.trim().length() == 0) {
         throw new ServletException("Principal not defined in configuration");
       }
       keytab = config.getProperty(KEYTAB, keytab);
+      LOG.info("dog----keytab:"+keytab);
       if (keytab == null || keytab.trim().length() == 0) {
         throw new ServletException("Keytab not defined in configuration");
       }
@@ -206,6 +211,7 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
       }
 
       String nameRules = config.getProperty(NAME_RULES, null);
+      LOG.info("dog----nameRules:"+nameRules);
       if (nameRules != null) {
         KerberosName.setRules(nameRules);
       }
@@ -250,6 +256,7 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
   public void destroy() {
     keytab = null;
     serverSubject = null;
+    LOG.info("destory");
     for (LoginContext loginContext : loginContexts) {
       try {
         loginContext.logout();
@@ -268,6 +275,7 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
    */
   @Override
   public String getType() {
+    LOG.info("dog----type:"+type);
     return type;
   }
 
@@ -286,6 +294,7 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
    * @return the keytab used by the authentication handler.
    */
   protected String getKeytab() {
+    LOG.info("dog----keytab:"+keytab);
     return keytab;
   }
 
@@ -328,7 +337,7 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
     throws IOException, AuthenticationException {
     AuthenticationToken token = null;
     String authorization = request.getHeader(KerberosAuthenticator.AUTHORIZATION);
-
+    LOG.info("dog----authorization:"+authorization);
     if (authorization == null || !authorization.startsWith(KerberosAuthenticator.NEGOTIATE)) {
       response.setHeader(WWW_AUTHENTICATE, KerberosAuthenticator.NEGOTIATE);
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -399,6 +408,8 @@ public class KerberosAuthenticationHandler implements AuthenticationHandler {
         }
       }
     }
+
+    LOG.info("dog----token:"+token);
     return token;
   }
 

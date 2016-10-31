@@ -13,6 +13,8 @@
  */
 package org.apache.hadoop.security.authentication.server;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.security.authentication.client.AuthenticationException;
 import org.apache.hadoop.security.authentication.util.AuthToken;
 
@@ -31,6 +33,7 @@ import javax.servlet.http.HttpServletRequest;
  */
 public class AuthenticationToken extends AuthToken {
 
+  public static final Log LOG= LogFactory.getLog(AuthenticationToken.class);
   /**
    * Constant that identifies an anonymous request.
    */
@@ -56,6 +59,7 @@ public class AuthenticationToken extends AuthToken {
    */
   public AuthenticationToken(String userName, String principal, String type) {
     super(userName, principal, type);
+    LOG.info("dog----userName:"+userName+" principal:"+principal+" type:"+type);
   }
 
   /**
@@ -64,6 +68,7 @@ public class AuthenticationToken extends AuthToken {
    * @param expires expiration time of the token in milliseconds since the epoch.
    */
   public void setExpires(long expires) {
+    LOG.info("dog----expires");
     if (this != AuthenticationToken.ANONYMOUS) {
       super.setExpires(expires);
     }
@@ -75,6 +80,7 @@ public class AuthenticationToken extends AuthToken {
    * @return true if the token has expired.
    */
   public boolean isExpired() {
+    LOG.info("dog----isExpired:"+super.isExpired());
     return super.isExpired();
   }
 
@@ -89,6 +95,7 @@ public class AuthenticationToken extends AuthToken {
    * an authentication token.
    */
   public static AuthenticationToken parse(String tokenStr) throws AuthenticationException {
+    LOG.info("dog----tokenStr:"+tokenStr);
     return new AuthenticationToken(AuthToken.parse(tokenStr));
   }
 }

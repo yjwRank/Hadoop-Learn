@@ -205,6 +205,7 @@ public class AuthenticationFilter implements Filter {
     config = getConfiguration(configPrefix, filterConfig);
     String authHandlerName = config.getProperty(AUTH_TYPE, null);
     String authHandlerClassName;
+    LOG.info("dog----configPrefix:"+configPrefix+" authHandlerName:"+authHandlerName);
     if (authHandlerName == null) {
       throw new ServletException("Authentication type must be specified: " +
           PseudoAuthenticationHandler.TYPE + "|" + 
@@ -225,9 +226,9 @@ public class AuthenticationFilter implements Filter {
     initializeSecretProvider(filterConfig);
 
     initializeAuthHandler(authHandlerClassName, filterConfig);
-
     cookieDomain = config.getProperty(COOKIE_DOMAIN, null);
     cookiePath = config.getProperty(COOKIE_PATH, null);
+    LOG.info("dog----authenHandlerClassName:"+authHandlerClassName+" cookieDomain:"+cookieDomain+"  cookiePath:"+cookiePath);
   }
 
   protected void initializeAuthHandler(String authHandlerClassName, FilterConfig filterConfig)
@@ -236,6 +237,7 @@ public class AuthenticationFilter implements Filter {
       Class<?> klass = Thread.currentThread().getContextClassLoader().loadClass(authHandlerClassName);
       authHandler = (AuthenticationHandler) klass.newInstance();
       authHandler.init(config);
+      LOG.info("dog----authenHandler:"+authHandler);
     } catch (ClassNotFoundException | InstantiationException |
         IllegalAccessException ex) {
       throw new ServletException(ex);
@@ -246,6 +248,7 @@ public class AuthenticationFilter implements Filter {
       throws ServletException {
     secretProvider = (SignerSecretProvider) filterConfig.getServletContext().
         getAttribute(SIGNER_SECRET_PROVIDER_ATTRIBUTE);
+    LOG.info("dog----filterConfig:"+filterConfig+"  secretProvider:"+secretProvider);
     if (secretProvider == null) {
       // As tomcat cannot specify the provider object in the configuration.
       // It'll go into this path
@@ -253,6 +256,7 @@ public class AuthenticationFilter implements Filter {
         secretProvider = constructSecretProvider(
             filterConfig.getServletContext(),
             config, false);
+        LOG.info("dog----secretProvider=null");
         isInitializedByTomcat = true;
       } catch (Exception ex) {
         throw new ServletException(ex);
@@ -267,7 +271,7 @@ public class AuthenticationFilter implements Filter {
     String name = config.getProperty(SIGNER_SECRET_PROVIDER, "file");
     long validity = Long.parseLong(config.getProperty(AUTH_TOKEN_VALIDITY,
                                                       "36000")) * 1000;
-
+    LOG.info("dog----name:"+name+" disallowFallbackToRandomSecreProvider:"+disallowFallbackToRandomSecretProvider+" validity:"+validity);
     if (!disallowFallbackToRandomSecretProvider
         && "file".equals(name)
         && config.getProperty(SIGNATURE_SECRET_FILE) == null) {
@@ -378,6 +382,7 @@ public class AuthenticationFilter implements Filter {
    */
   @Override
   public void destroy() {
+    LOG.info("dog----destroy");
     if (authHandler != null) {
       authHandler.destroy();
       authHandler = null;
@@ -413,6 +418,7 @@ public class AuthenticationFilter implements Filter {
         props.put(name.substring(configPrefix.length()), value);
       }
     }
+    LOG.info("dog----configPrefix:"+configPrefix+" filterConfig:"+filterConfig+" props:"+props);
     return props;
   }
 
@@ -430,6 +436,7 @@ public class AuthenticationFilter implements Filter {
     if (request.getQueryString() != null) {
       sb.append("?").append(request.getQueryString());
     }
+    LOG.info("dog----sb:"+sb.toString());
     return sb.toString();
   }
 
@@ -455,6 +462,7 @@ public class AuthenticationFilter implements Filter {
     String tokenStr = null;
     Cookie[] cookies = request.getCookies();
     if (cookies != null) {
+      LOG.info("dog----cookies!=null");
       for (Cookie cookie : cookies) {
         if (cookie.getName().equals(AuthenticatedURL.AUTH_COOKIE)) {
           tokenStr = cookie.getValue();
@@ -468,6 +476,7 @@ public class AuthenticationFilter implements Filter {
       }
     }
     if (tokenStr != null) {
+      LOG.info("dog----tokenStr:"+tokenStr);
       token = AuthenticationToken.parse(tokenStr);
       if (!token.getType().equals(authHandler.getType())) {
         throw new AuthenticationException("Invalid AuthenticationToken type");
@@ -499,6 +508,7 @@ public class AuthenticationFilter implements Filter {
     HttpServletRequest httpRequest = (HttpServletRequest) request;
     HttpServletResponse httpResponse = (HttpServletResponse) response;
     boolean isHttps = "https".equals(httpRequest.getScheme());
+    LOG.info("dog----isHttps:"+isHttps);
     try {
       boolean newToken = false;
       AuthenticationToken token;
@@ -592,6 +602,7 @@ public class AuthenticationFilter implements Filter {
    */
   protected void doFilter(FilterChain filterChain, HttpServletRequest request,
       HttpServletResponse response) throws IOException, ServletException {
+    LOG.info("dog----doFilter");
     filterChain.doFilter(request, response);
   }
 
@@ -609,6 +620,7 @@ public class AuthenticationFilter implements Filter {
   public static void createAuthCookie(HttpServletResponse resp, String token,
                                       String domain, String path, long expires,
                                       boolean isSecure) {
+    LOG.info("dog----token:"+token+" domain:"+domain+" path:"+path+" expires:"+expires+" isSecure:"+isSecure);
     StringBuilder sb = new StringBuilder(AuthenticatedURL.AUTH_COOKIE)
                            .append("=");
     if (token != null && token.length() > 0) {
@@ -637,5 +649,6 @@ public class AuthenticationFilter implements Filter {
 
     sb.append("; HttpOnly");
     resp.addHeader("Set-Cookie", sb.toString());
+    LOG.info("dog----sb:"+sb.toString());
   }
 }

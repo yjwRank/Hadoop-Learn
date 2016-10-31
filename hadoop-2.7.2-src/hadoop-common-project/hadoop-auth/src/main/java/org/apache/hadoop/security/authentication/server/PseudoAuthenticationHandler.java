@@ -13,6 +13,8 @@
  */
 package org.apache.hadoop.security.authentication.server;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.security.authentication.client.AuthenticationException;
 import org.apache.hadoop.security.authentication.client.PseudoAuthenticator;
 import org.apache.http.client.utils.URLEncodedUtils;
@@ -42,7 +44,7 @@ import java.util.Properties;
  * </ul>
  */
 public class PseudoAuthenticationHandler implements AuthenticationHandler {
-
+  public static final Log LOG= LogFactory.getLog(PseudoAuthenticationHandler.class);
   /**
    * Constant that identifies the authentication mechanism.
    */
@@ -66,6 +68,7 @@ public class PseudoAuthenticationHandler implements AuthenticationHandler {
    */
   public PseudoAuthenticationHandler() {
     this(TYPE);
+    LOG.info("dog----default");
   }
 
   /**
@@ -76,6 +79,7 @@ public class PseudoAuthenticationHandler implements AuthenticationHandler {
    */
   public PseudoAuthenticationHandler(String type) {
     this.type = type;
+    LOG.info("dog----type:"+type);
   }
 
   /**
@@ -89,6 +93,7 @@ public class PseudoAuthenticationHandler implements AuthenticationHandler {
    */
   @Override
   public void init(Properties config) throws ServletException {
+    LOG.info("dog----acceptAnoymous:"+acceptAnonymous);
     acceptAnonymous = Boolean.parseBoolean(config.getProperty(ANONYMOUS_ALLOWED, "false"));
   }
 
@@ -98,6 +103,7 @@ public class PseudoAuthenticationHandler implements AuthenticationHandler {
    * @return if the handler is configured to support anonymous users.
    */
   protected boolean getAcceptAnonymous() {
+    LOG.info("dog----accpetAnoymous:"+acceptAnonymous);
     return acceptAnonymous;
   }
 
@@ -117,6 +123,7 @@ public class PseudoAuthenticationHandler implements AuthenticationHandler {
    */
   @Override
   public String getType() {
+    LOG.info("dog----type:"+type);
     return type;
   }
 
@@ -142,10 +149,12 @@ public class PseudoAuthenticationHandler implements AuthenticationHandler {
   }
 
   private String getUserName(HttpServletRequest request) {
+    LOG.info("dog----getUserName");
     List<NameValuePair> list = URLEncodedUtils.parse(request.getQueryString(), UTF8_CHARSET);
     if (list != null) {
       for (NameValuePair nv : list) {
         if (PseudoAuthenticator.USER_NAME.equals(nv.getName())) {
+          LOG.info("dog----nv.getValue():"+nv.getValue());
           return nv.getValue();
         }
       }
@@ -179,6 +188,7 @@ public class PseudoAuthenticationHandler implements AuthenticationHandler {
     throws IOException, AuthenticationException {
     AuthenticationToken token;
     String userName = getUserName(request);
+    LOG.info("dog----userName:"+userName);
     if (userName == null) {
       if (getAcceptAnonymous()) {
         token = AuthenticationToken.ANONYMOUS;
