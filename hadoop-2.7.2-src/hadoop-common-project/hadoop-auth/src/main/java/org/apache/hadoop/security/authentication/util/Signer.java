@@ -14,6 +14,8 @@
 package org.apache.hadoop.security.authentication.util;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
@@ -23,6 +25,9 @@ import java.security.NoSuchAlgorithmException;
  * Signs strings and verifies signed strings using a SHA digest.
  */
 public class Signer {
+
+  public static final Log LOG= LogFactory.getLog(Signer.class);
+
   private static final String SIGNATURE = "&s=";
 
   private SignerSecretProvider secretProvider;
@@ -34,6 +39,7 @@ public class Signer {
    * @param secretProvider The SignerSecretProvider to use
    */
   public Signer(SignerSecretProvider secretProvider) {
+    LOG.info("dog----secretProvider:"+secretProvider);
     if (secretProvider == null) {
       throw new IllegalArgumentException("secretProvider cannot be NULL");
     }
@@ -48,11 +54,13 @@ public class Signer {
    * @return the signed string.
    */
   public synchronized String sign(String str) {
+    LOG.info("dog----str:"+str);
     if (str == null || str.length() == 0) {
       throw new IllegalArgumentException("NULL or empty string to sign");
     }
     byte[] secret = secretProvider.getCurrentSecret();
     String signature = computeSignature(secret, str);
+    LOG.info("dog----return:"+str + SIGNATURE + signature);
     return str + SIGNATURE + signature;
   }
 
@@ -66,6 +74,7 @@ public class Signer {
    * @throws SignerException thrown if the given string is not a signed string or if the signature is invalid.
    */
   public String verifyAndExtract(String signedStr) throws SignerException {
+    LOG.info("dog----signedStr:"+signedStr);
     int index = signedStr.lastIndexOf(SIGNATURE);
     if (index == -1) {
       throw new SignerException("Invalid signed text: " + signedStr);
@@ -73,6 +82,7 @@ public class Signer {
     String originalSignature = signedStr.substring(index + SIGNATURE.length());
     String rawValue = signedStr.substring(0, index);
     checkSignatures(rawValue, originalSignature);
+    LOG.info("dog----index:"+index+" originalSignature:"+originalSignature+" rawValue:"+rawValue);
     return rawValue;
   }
 
@@ -85,6 +95,7 @@ public class Signer {
    * @return the signature for the string.
    */
   protected String computeSignature(byte[] secret, String str) {
+    LOG.info("dog----secret:"+String.valueOf(secret)+" str:"+str);
     try {
       MessageDigest md = MessageDigest.getInstance("SHA");
       md.update(str.getBytes(Charset.forName("UTF-8")));
@@ -100,6 +111,7 @@ public class Signer {
       throws SignerException {
     boolean isValid = false;
     byte[][] secrets = secretProvider.getAllSecrets();
+    LOG.info("dog----rawValue:"+rawValue+" originalSignature:"+originalSignature+" isValid:"+isValid+" secrets:"+String.valueOf(secrets));
     for (int i = 0; i < secrets.length; i++) {
       byte[] secret = secrets[i];
       if (secret != null) {

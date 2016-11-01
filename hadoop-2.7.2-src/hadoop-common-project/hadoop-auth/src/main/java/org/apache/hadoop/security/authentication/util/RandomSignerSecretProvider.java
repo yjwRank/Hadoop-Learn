@@ -17,6 +17,9 @@ import com.google.common.annotations.VisibleForTesting;
 
 import java.nio.charset.Charset;
 import java.util.Random;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 
@@ -28,6 +31,7 @@ import org.apache.hadoop.classification.InterfaceStability;
 @InterfaceAudience.Private
 public class RandomSignerSecretProvider extends RolloverSignerSecretProvider {
 
+  public static final Log LOG= LogFactory.getLog(RandomSignerSecretProvider.class);
   private final Random rand;
 
   public RandomSignerSecretProvider() {
@@ -48,6 +52,7 @@ public class RandomSignerSecretProvider extends RolloverSignerSecretProvider {
 
   @Override
   protected byte[] generateNewSecret() {
+    LOG.info("dog---generateNewSecret:"+rand.nextLong());
     return Long.toString(rand.nextLong()).getBytes(Charset.forName("UTF-8"));
   }
 }

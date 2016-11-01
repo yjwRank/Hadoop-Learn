@@ -66,6 +66,7 @@ public abstract class RolloverSignerSecretProvider
   @Override
   public void init(Properties config, ServletContext servletContext,
           long tokenValidity) throws Exception {
+    LOG.info("dog----init");
     initSecrets(generateNewSecret(), null);
     startScheduler(tokenValidity, tokenValidity);
   }
@@ -79,6 +80,7 @@ public abstract class RolloverSignerSecretProvider
    * @param previousSecret The previous secret
    */
   protected void initSecrets(byte[] currentSecret, byte[] previousSecret) {
+    LOG.info("dog----current:"+String.valueOf(currentSecret)+" previous:"+String.valueOf(previousSecret));
     secrets = new byte[][]{currentSecret, previousSecret};
   }
 
@@ -88,6 +90,7 @@ public abstract class RolloverSignerSecretProvider
    * @param period The interval for the rollover in milliseconds
    */
   protected synchronized void startScheduler(long initialDelay, long period) {
+    LOG.info("dog----schedulerRunning:"+schedulerRunning+" initalDelay:"+initialDelay+" period:"+period);
     if (!schedulerRunning) {
       schedulerRunning = true;
       scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -102,6 +105,7 @@ public abstract class RolloverSignerSecretProvider
 
   @Override
   public synchronized void destroy() {
+    LOG.info("dog----isDestroyed:"+isDestroyed);
     if (!isDestroyed) {
       isDestroyed = true;
       if (scheduler != null) {
@@ -116,6 +120,7 @@ public abstract class RolloverSignerSecretProvider
    * Rolls the secret.  It is called automatically at the rollover interval.
    */
   protected synchronized void rollSecret() {
+    LOG.info("dog----");
     if (!isDestroyed) {
       LOG.debug("rolling secret");
       byte[] newSecret = generateNewSecret();

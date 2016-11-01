@@ -25,6 +25,9 @@ import java.util.Random;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.servlet.ServletContext;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -90,6 +93,9 @@ import org.slf4j.LoggerFactory;
 @InterfaceAudience.Private
 public class ZKSignerSecretProvider extends RolloverSignerSecretProvider {
 
+
+  public static final Log LOG= LogFactory.getLog(ZKSignerSecretProvider.class);
+
   private static final String CONFIG_PREFIX =
           "signer.secret.provider.zookeeper.";
 
@@ -145,8 +151,7 @@ public class ZKSignerSecretProvider extends RolloverSignerSecretProvider {
   private static final String JAAS_LOGIN_ENTRY_NAME =
           "ZKSignerSecretProviderClient";
 
-  private static Logger LOG = LoggerFactory.getLogger(
-          ZKSignerSecretProvider.class);
+  //private static Logger LOG = LoggerFactory.getLogger(ZKSignerSecretProvider.class);
   private String path;
   /**
    * Stores the next secret that will be used after the current one rolls over.
@@ -176,6 +181,7 @@ public class ZKSignerSecretProvider extends RolloverSignerSecretProvider {
 
   public ZKSignerSecretProvider() {
     super();
+    LOG.info("dog----default constructor");
     rand = new Random();
   }
 
@@ -187,12 +193,14 @@ public class ZKSignerSecretProvider extends RolloverSignerSecretProvider {
   @VisibleForTesting
   public ZKSignerSecretProvider(long seed) {
     super();
+    LOG.info("dog----seed:"+seed);
     rand = new Random(seed);
   }
 
   @Override
   public void init(Properties config, ServletContext servletContext,
           long tokenValidity) throws Exception {
+    LOG.info("dog----tokenValidity:"+tokenValidity);
     Object curatorClientObj = servletContext.getAttribute(
             ZOOKEEPER_SIGNER_SECRET_PROVIDER_CURATOR_CLIENT_ATTRIBUTE);
     if (curatorClientObj != null
@@ -246,6 +254,7 @@ public class ZKSignerSecretProvider extends RolloverSignerSecretProvider {
    */
   @Override
   public void destroy() {
+    LOG.info("dog---shouldDisconnect:"+shouldDisconnect+" client:"+client);
     if (shouldDisconnect && client != null) {
       client.close();
     }
@@ -254,6 +263,7 @@ public class ZKSignerSecretProvider extends RolloverSignerSecretProvider {
 
   @Override
   protected synchronized void rollSecret() {
+    LOG.info("dog----rollSecret");
     super.rollSecret();
     // Try to push the information to ZooKeeper with a potential next secret.
     nextRolloverDate += tokenValidity;
@@ -266,6 +276,7 @@ public class ZKSignerSecretProvider extends RolloverSignerSecretProvider {
 
   @Override
   protected byte[] generateNewSecret() {
+    LOG.info("dog----nextSecret:"+nextSecret);
     // We simply return nextSecret because it's already been decided on
     return nextSecret;
   }
