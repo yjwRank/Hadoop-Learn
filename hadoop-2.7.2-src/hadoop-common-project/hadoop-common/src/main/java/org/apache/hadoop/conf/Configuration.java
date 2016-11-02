@@ -174,8 +174,8 @@ import com.google.common.base.Preconditions;
 @InterfaceStability.Stable
 public class Configuration implements Iterable<Map.Entry<String,String>>,
                                       Writable {
-  private static final Log LOG =
-    LogFactory.getLog(Configuration.class);
+//  private static final Log LOG = LogFactory.getLog(Configuration.class);
+  public static final Log LOG=LogFactory.getLog(Configuration.class);
 
   private static final Log LOG_DEPRECATION =
     LogFactory.getLog("org.apache.hadoop.conf.Configuration.deprecation");
@@ -289,6 +289,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
      */
     private final String getWarningMessage(String key) {
       String warningMessage;
+      LOG.info("dog----DeprecatedKeyInfo-getWarningMessage key:"+key+" customMessage:"+customMessage);
       if(customMessage == null) {
         StringBuilder message = new StringBuilder(key);
         String deprecatedKeySuffix = " is deprecated. Instead, use ";
@@ -304,6 +305,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
       else {
         warningMessage = customMessage;
       }
+      LOG.info("dog----DeprecatedKeyInfo-getWarningMessage warningMessage:"+warningMessage);
       return warningMessage;
     }
 
@@ -462,6 +464,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    */
   public static void addDeprecations(DeprecationDelta[] deltas) {
     DeprecationContext prev, next;
+    LOG.info("dog----deltas:"+deltas.toString());
     do {
       prev = deprecationContext.get();
       next = new DeprecationContext(prev, deltas);
@@ -491,6 +494,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
   @Deprecated
   public static void addDeprecation(String key, String[] newKeys,
       String customMessage) {
+    LOG.info("dog----key:"+key+" newKeys:"+newKeys.toString()+" customMessage:"+customMessage);
     addDeprecations(new DeprecationDelta[] {
       new DeprecationDelta(key, newKeys, customMessage)
     });
@@ -565,6 +569,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    *         <code>false</code> otherwise.
    */
   public static boolean isDeprecated(String key) {
+    LOG.info("dog----key:"+key+" boolean:"+deprecationContext.get().getDeprecatedKeyMap().containsKey(key));
     return deprecationContext.get().getDeprecatedKeyMap().containsKey(key);
   }
 
@@ -578,6 +583,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
     DeprecationContext deprecations = deprecationContext.get();
     Properties props = getProps();
     Properties overlay = getOverlay();
+    LOG.info("dog----deprections:"+deprecations.toString()+" props:"+props.toString()+"  overlay:"+overlay.toString());
     for (Map.Entry<String, DeprecatedKeyInfo> entry :
         deprecations.getDeprecatedKeyMap().entrySet()) {
       String depKey = entry.getKey();
@@ -608,6 +614,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    */
   private String[] handleDeprecation(DeprecationContext deprecations,
       String name) {
+    LOG.info("dog----name:"+name+"  deprecations:"+deprecations.toString());
     if (null != name) {
       name = name.trim();
     }
@@ -620,12 +627,14 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
           names.add(newKey);
         }
       }
+      LOG.info("dog----names:"+names.toString());
     }
     if(names.size() == 0) {
     	names.add(name);
     }
     for(String n : names) {
 	  String deprecatedKey = deprecations.getReverseDeprecatedKeyMap().get(n);
+      LOG.info("dog---deprecatedKey:"+deprecatedKey);
 	  if (deprecatedKey != null && !getOverlay().containsKey(n) &&
 	      getOverlay().containsKey(deprecatedKey)) {
 	    getProps().setProperty(n, getOverlay().getProperty(deprecatedKey));
@@ -731,6 +740,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * @param name file name. File should be present in the classpath.
    */
   public static synchronized void addDefaultResource(String name) {
+    LOG.info("dog----name:"+name);
     if(!defaultResources.contains(name)) {
       defaultResources.add(name);
       for(Configuration conf : REGISTRY.keySet()) {
@@ -751,6 +761,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    *             with that name.
    */
   public void addResource(String name) {
+    LOG.info("dog----name:"+name);
     addResourceObject(new Resource(name));
   }
 
@@ -765,6 +776,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    *            the classpath.
    */
   public void addResource(URL url) {
+    LOG.info("dog----url:"+url);
     addResourceObject(new Resource(url));
   }
 
@@ -779,6 +791,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    *             the classpath.
    */
   public void addResource(Path file) {
+    LOG.info("dog----file:"+file.toString());
     addResourceObject(new Resource(file));
   }
 
@@ -796,6 +809,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * closed. 
    */
   public void addResource(InputStream in) {
+    LOG.info("dog----in:"+in.toString());
     addResourceObject(new Resource(in));
   }
 
@@ -810,6 +824,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * very descriptive some times.  
    */
   public void addResource(InputStream in, String name) {
+    LOG.info("dog----in:"+in.toString()+" name:"+name);
     addResourceObject(new Resource(in, name));
   }
   
@@ -822,6 +837,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * @param conf Configuration object from which to load properties
    */
   public void addResource(Configuration conf) {
+    LOG.info("dog----conf:"+conf.toString());
     addResourceObject(new Resource(conf.getProps()));
   }
 
@@ -836,11 +852,13 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * via set methods will overlay values read from the resources.
    */
   public synchronized void reloadConfiguration() {
+    LOG.info("dog-----reloadConfiguration");
     properties = null;                            // trigger reload
     finalParameters.clear();                      // clear site-limits
   }
   
   private synchronized void addResourceObject(Resource resource) {
+    LOG.info("dog----resource:"+resource);
     resources.add(resource);                      // add to resources
     reloadConfiguration();
   }
@@ -867,7 +885,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
 
     int matchStart;
     int leftBrace;
-
+    LOG.info("dog----eval:"+eval);
     // scanning for a brace first because it's less frequent than $
     // that can occur in nested class names
     //
@@ -907,6 +925,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
         matchStart = leftBrace + 1;
       }
     }
+    LOG.info("dog----result:"+result.toString());
     return result;
   }
 
@@ -931,6 +950,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
     if (expr == null) {
       return null;
     }
+    LOG.info("dog----expr:"+expr);
     String eval = expr;
     for (int s = 0; s < MAX_SUBST; s++) {
       final int[] varBounds = findSubVariable(eval);
@@ -980,6 +1000,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
     for(String n : names) {
       result = substituteVars(getProps().getProperty(n));
     }
+    LOG.info("dog----name:"+name+" resutl:"+result);
     return result;
   }
 
@@ -991,6 +1012,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    */
   @VisibleForTesting
   public void setAllowNullValueProperties( boolean val ) {
+    LOG.info("dog----val:"+val);
     this.allowNullValueProperties = val;
   }
 
@@ -1004,13 +1026,16 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    */
   @VisibleForTesting
   public boolean onlyKeyExists(String name) {
+    LOG.info("dog----name:"+name);
     String[] names = handleDeprecation(deprecationContext.get(), name);
     for(String n : names) {
       if ( getProps().getProperty(n,DEFAULT_STRING_CHECK)
                .equals(DEFAULT_STRING_CHECK) ) {
+        LOG.info("dog----true");
         return true;
       }
     }
+    LOG.info("dog----false");
     return false;
   }
 
@@ -1029,7 +1054,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    */
   public String getTrimmed(String name) {
     String value = get(name);
-    
+    LOG.info("dog----name:"+name+" value:"+value);
     if (null == value) {
       return null;
     } else {
@@ -1049,6 +1074,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    */
   public String getTrimmed(String name, String defaultValue) {
     String ret = getTrimmed(name);
+    LOG.info("dog----name:"+name+" defaultValue:"+defaultValue+" ret:"+ret);
     return ret == null ? defaultValue : ret;
   }
 
@@ -1068,6 +1094,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
     for(String n : names) {
       result = getProps().getProperty(n);
     }
+    LOG.info("dog----name:"+name+" result:"+result);
     return result;
   }
 
@@ -1080,6 +1107,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * @return alternative names.
    */
   private String[] getAlternativeNames(String name) {
+    LOG.info("dog----name:"+name);
     String altNames[] = null;
     DeprecatedKeyInfo keyInfo = null;
     DeprecationContext cur = deprecationContext.get();
@@ -1099,6 +1127,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
         }
       }
     }
+    LOG.info("dog----altNames:"+altNames.toString());
     return altNames;
   }
 
@@ -1128,6 +1157,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * @throws IllegalArgumentException when the value or name is null.
    */
   public void set(String name, String value, String source) {
+    LOG.info("dog----name:"+name+" value:"+value+" source:"+source);
     Preconditions.checkArgument(
         name != null,
         "Property name must not be null");
@@ -1146,6 +1176,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
     if (!isDeprecated(name)) {
       updatingResource.put(name, new String[] {newSource});
       String[] altNames = getAlternativeNames(name);
+      LOG.info("dog----altNames:"+altNames.toString());
       if(altNames != null) {
         for(String n: altNames) {
           if(!n.equals(name)) {
@@ -1158,6 +1189,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
     }
     else {
       String[] names = handleDeprecation(deprecationContext.get(), name);
+      LOG.info("dog----names:"+names.toString());
       String altSource = "because " + name + " is deprecated";
       for(String n : names) {
         getOverlay().setProperty(n, value);
@@ -1178,6 +1210,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * Unset a previously set property.
    */
   public synchronized void unset(String name) {
+    LOG.info("dog----name:"+name);
     String[] names = null;
     if (!isDeprecated(name)) {
       names = getAlternativeNames(name);
@@ -1201,6 +1234,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * @param value the new value
    */
   public synchronized void setIfUnset(String name, String value) {
+    LOG.info("dog----name:"+name+" value:"+value);
     if (get(name) == null) {
       set(name, value);
     }
@@ -1226,11 +1260,13 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    *         doesn't exist.                    
    */
   public String get(String name, String defaultValue) {
+
     String[] names = handleDeprecation(deprecationContext.get(), name);
     String result = null;
     for(String n : names) {
       result = substituteVars(getProps().getProperty(n, defaultValue));
     }
+    LOG.info("dog----name:"+name+" defaultValue:"+defaultValue+" result:"+result);
     return result;
   }
 
@@ -1255,6 +1291,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
     if (hexString != null) {
       return Integer.parseInt(hexString, 16);
     }
+    LOG.info("dog----name:"+name+" defaultValue:"+defaultValue+"  return:"+Integer.parseInt(valueString));
     return Integer.parseInt(valueString);
   }
   
@@ -1274,6 +1311,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
     for (int i = 0; i < strings.length; i++) {
       ints[i] = Integer.parseInt(strings[i]);
     }
+    LOG.info("dog----name:"+name+" ints:"+ints.toString());
     return ints;
   }
 
@@ -1284,6 +1322,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * @param value <code>int</code> value of the property.
    */
   public void setInt(String name, int value) {
+    LOG.info("dog----name:"+name+" value:"+value);
     set(name, Integer.toString(value));
   }
 
@@ -1329,6 +1368,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
     String valueString = getTrimmed(name);
     if (valueString == null)
       return defaultValue;
+    LOG.info("dog----name:"+name+" defaultValue:"+defaultValue+" valueString:"+valueString+"  return:"+StringUtils.TraditionalBinaryPrefix.string2long(valueString));
     return StringUtils.TraditionalBinaryPrefix.string2long(valueString);
   }
 
@@ -1336,6 +1376,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
     boolean negative = false;
     String str = value;
     String hexString = null;
+    LOG.info("dog----value："+value);
     if (value.startsWith("-")) {
       negative = true;
       str = value.substring(1);
@@ -1357,6 +1398,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * @param value <code>long</code> value of the property.
    */
   public void setLong(String name, long value) {
+    LOG.info("dog----name:"+name+" value:"+value);
     set(name, Long.toString(value));
   }
 
@@ -1376,6 +1418,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
     String valueString = getTrimmed(name);
     if (valueString == null)
       return defaultValue;
+    LOG.info("dog----name:"+name+" defaultValue:"+defaultValue+" return:"+Float.parseFloat(valueString));
     return Float.parseFloat(valueString);
   }
 
@@ -1386,6 +1429,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * @param value property value.
    */
   public void setFloat(String name, float value) {
+    LOG.info("dog----name:"+name+" value:"+value);
     set(name,Float.toString(value));
   }
 
@@ -1405,6 +1449,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
     String valueString = getTrimmed(name);
     if (valueString == null)
       return defaultValue;
+    LOG.info("dog----name:"+name+" defaultValue:"+defaultValue+" return:"+Double.parseDouble(valueString));
     return Double.parseDouble(valueString);
   }
 
@@ -1415,6 +1460,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * @param value property value.
    */
   public void setDouble(String name, double value) {
+    LOG.info("dog----name:"+name+" value:"+value);
     set(name,Double.toString(value));
   }
  
@@ -1430,6 +1476,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    */
   public boolean getBoolean(String name, boolean defaultValue) {
     String valueString = getTrimmed(name);
+    LOG.info("dog----name:"+name+" defaultValue:"+defaultValue);
     if (null == valueString || valueString.isEmpty()) {
       return defaultValue;
     }
@@ -1448,6 +1495,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * @param value <code>boolean</code> value of the property.
    */
   public void setBoolean(String name, boolean value) {
+    LOG.info("dog----name:"+name+" booelean:"+value);
     set(name, Boolean.toString(value));
   }
 
@@ -1457,6 +1505,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * @param value new value
    */
   public void setBooleanIfUnset(String name, boolean value) {
+    LOG.info("dog----name:"+name+" value:"+value);
     setIfUnset(name, Boolean.toString(value));
   }
 
@@ -1467,6 +1516,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * @param value new value
    */
   public <T extends Enum<T>> void setEnum(String name, T value) {
+    LOG.info("dog----name:"+name+" value:"+value);
     set(name, value.toString());
   }
 
@@ -1480,6 +1530,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    */
   public <T extends Enum<T>> T getEnum(String name, T defaultValue) {
     final String val = getTrimmed(name);
+    LOG.info("dog----name:"+name+" defaultValue:"+defaultValue);
     return null == val
       ? defaultValue
       : Enum.valueOf(defaultValue.getDeclaringClass(), val);
@@ -1584,6 +1635,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    */
   public Pattern getPattern(String name, Pattern defaultValue) {
     String valString = get(name);
+    LOG.info("dog----name:"+name+" defaultValue:"+defaultValue);
     if (null == valString || valString.isEmpty()) {
       return defaultValue;
     }
@@ -1605,6 +1657,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * @param pattern new value
    */
   public void setPattern(String name, Pattern pattern) {
+    LOG.info("dog----name:"+name+" Pattern:"+pattern.toString());
     assert pattern != null : "Pattern cannot be null";
     set(name, pattern.pattern());
   }
@@ -1626,6 +1679,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    */
   @InterfaceStability.Unstable
   public synchronized String[] getPropertySources(String name) {
+    LOG.info("dog----name:"+name);
     if (properties == null) {
       // If properties is null, it means a resource was newly added
       // but the props were cleared so as to load it upon future
@@ -1647,10 +1701,10 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
   }
 
   /**
-   * A class that represents a set of positive integer ranges. It parses 
-   * strings of the form: "2-3,5,7-" where ranges are separated by comma and 
-   * the lower/upper bounds are separated by dash. Either the lower or upper 
-   * bound may be omitted meaning all values up to or over. So the string 
+   * A class that represents a set of positive integer ranges. It parses
+   * strings of the form: "2-3,5,7-" where ranges are separated by comma and
+   * the lower/upper bounds are separated by dash. Either the lower or upper
+   * bound may be omitted meaning all values up to or over. So the string
    * above means 2, 3, 5, and 7, 8, 9, ...
    */
   public static class IntegerRanges implements Iterable<Integer>{
@@ -1800,6 +1854,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * @return a new set of ranges from the configured value
    */
   public IntegerRanges getRange(String name, String defaultValue) {
+    LOG.info("dog----name:"+name+" defaultValue:"+defaultValue);
     return new IntegerRanges(get(name, defaultValue));
   }
 
@@ -1815,6 +1870,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    */
   public Collection<String> getStringCollection(String name) {
     String valueString = get(name);
+    LOG.info("dog----name:"+name+" valueString:"+valueString+" return:"+StringUtils.getStringCollection(valueString));
     return StringUtils.getStringCollection(valueString);
   }
 
@@ -1829,6 +1885,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    */
   public String[] getStrings(String name) {
     String valueString = get(name);
+    LOG.info("dog----name:"+name+" valueString:"+valueString+" return:"+StringUtils.getStrings(valueString));
     return StringUtils.getStrings(valueString);
   }
 
@@ -1844,6 +1901,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    */
   public String[] getStrings(String name, String... defaultValue) {
     String valueString = get(name);
+    LOG.info("dog----name:"+name+" valueString:"+valueString+"  defaultValue:"+defaultValue.toString());
     if (valueString == null) {
       return defaultValue;
     } else {
@@ -1861,6 +1919,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    */
   public Collection<String> getTrimmedStringCollection(String name) {
     String valueString = get(name);
+    LOG.info("dog----name:"+name+" valueString:"+valueString);
     if (null == valueString) {
       Collection<String> empty = new ArrayList<String>();
       return empty;
@@ -1879,6 +1938,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    */
   public String[] getTrimmedStrings(String name) {
     String valueString = get(name);
+    LOG.info("dog----name:"+name+" valueString:"+valueString+" return:"+StringUtils.getTrimmedStrings(valueString));
     return StringUtils.getTrimmedStrings(valueString);
   }
 
@@ -1894,6 +1954,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    */
   public String[] getTrimmedStrings(String name, String... defaultValue) {
     String valueString = get(name);
+    LOG.info("dog----name:"+name+" defaultValue:"+defaultValue.toString());
     if (null == valueString) {
       return defaultValue;
     } else {
@@ -1909,6 +1970,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * @param values The values
    */
   public void setStrings(String name, String... values) {
+    LOG.info("dog----name:"+name+" values:"+values.toString());
     set(name, StringUtils.arrayToString(values));
   }
 
@@ -1922,7 +1984,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    */
   public char[] getPassword(String name) throws IOException {
     char[] pass = null;
-
+    LOG.info("dog----name:"+name);
     pass = getPasswordFromCredentialProviders(name);
 
     if (pass == null) {
@@ -1965,7 +2027,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
     catch (IOException ioe) {
       throw new IOException("Configuration problem with provider path.", ioe);
     }
-
+    LOG.info("dog---name:"+name+" pass:"+String.valueOf(pass));
     return pass;
   }
 
@@ -1982,6 +2044,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
         pass = passStr.toCharArray();
       }
     }
+    LOG.info("dog----name:"+name+" pass:"+String.valueOf(pass));
     return pass;
   }
 
@@ -2003,7 +2066,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
       String addressProperty,
       String defaultAddressValue,
       int defaultPort) {
-
+    LOG.info("dog----hostProperty:"+hostProperty+" addressProperty:"+addressProperty+" defaultAddressValue:"+defaultAddressValue);
     InetSocketAddress bindAddr = getSocketAddr(
       addressProperty, defaultAddressValue, defaultPort);
 
@@ -2028,6 +2091,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
   public InetSocketAddress getSocketAddr(
       String name, String defaultAddress, int defaultPort) {
     final String address = getTrimmed(name, defaultAddress);
+    LOG.info("dog----name:"+name+" defaultAddress:"+defaultAddress+" defaultPort:"+defaultPort);
     return NetUtils.createSocketAddr(address, defaultPort, name);
   }
 
@@ -2036,6 +2100,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * a <code>host:port</code>.
    */
   public void setSocketAddr(String name, InetSocketAddress addr) {
+    LOG.info("dog----name:"+name+" InetSocketAddress:"+addr.toString());
     set(name, NetUtils.getHostPortString(addr));
   }
 
@@ -2061,7 +2126,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
 
     final String host = get(hostProperty);
     final String connectHostPort = getTrimmed(addressProperty, defaultAddressValue);
-
+    LOG.info("dog----hostProperty:"+hostProperty+" addressProperty:"+addressProperty+" defaultAddressValue:"+defaultAddressValue+" host:"+host+" connectinHostPort:"+connectHostPort);
     if (host == null || host.isEmpty() || connectHostPort == null || connectHostPort.isEmpty()) {
       //not our case, fall back to original logic
       return updateConnectAddr(addressProperty, addr);
@@ -2083,6 +2148,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    */
   public InetSocketAddress updateConnectAddr(String name,
                                              InetSocketAddress addr) {
+    LOG.info("dog----name:"+name+" addr:"+addr.toString());
     final InetSocketAddress connectAddr = NetUtils.getConnectAddress(addr);
     setSocketAddr(name, connectAddr);
     return connectAddr;
@@ -2096,6 +2162,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * @throws ClassNotFoundException if the class is not found.
    */
   public Class<?> getClassByName(String name) throws ClassNotFoundException {
+    LOG.info("dog----name:"+name);
     Class<?> ret = getClassByNameOrNull(name);
     if (ret == null) {
       throw new ClassNotFoundException("Class " + name + " not found");
@@ -2113,7 +2180,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    */
   public Class<?> getClassByNameOrNull(String name) {
     Map<String, WeakReference<Class<?>>> map;
-    
+    LOG.info("dog----name:"+name);
     synchronized (CACHE_CLASSES) {
       map = CACHE_CLASSES.get(classLoader);
       if (map == null) {
@@ -2162,6 +2229,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    */
   public Class<?>[] getClasses(String name, Class<?> ... defaultValue) {
     String[] classnames = getTrimmedStrings(name);
+    LOG.info("dog----name:"+name+" defaultValue:"+defaultValue.toString());
     if (classnames == null)
       return defaultValue;
     try {
@@ -2187,6 +2255,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    */
   public Class<?> getClass(String name, Class<?> defaultValue) {
     String valueString = getTrimmed(name);
+    LOG.info("dog----name:"+name+" defaultValue:"+defaultValue.toString());
     if (valueString == null)
       return defaultValue;
     try {
@@ -2215,6 +2284,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
   public <U> Class<? extends U> getClass(String name, 
                                          Class<? extends U> defaultValue, 
                                          Class<U> xface) {
+    LOG.info("dog----name:"+name+" defaultValue:"+defaultValue.toString()+" xface:"+xface.toString());
     try {
       Class<?> theClass = getClass(name, defaultValue);
       if (theClass != null && !xface.isAssignableFrom(theClass))
@@ -2242,6 +2312,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    */
   @SuppressWarnings("unchecked")
   public <U> List<U> getInstances(String name, Class<U> xface) {
+
     List<U> ret = new ArrayList<U>();
     Class<?>[] classes = getClasses(name);
     for (Class<?> cl: classes) {
@@ -2250,6 +2321,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
       }
       ret.add((U)ReflectionUtils.newInstance(cl, this));
     }
+    LOG.info("dog----name:"+name+" xface:"+xface.toString()+" ret:"+ret.toString());
     return ret;
   }
 
@@ -2265,6 +2337,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * @param xface the interface implemented by the named class.
    */
   public void setClass(String name, Class<?> theClass, Class<?> xface) {
+    LOG.info("dog----name:"+name+" xface:"+xface.toString());
     if (!xface.isAssignableFrom(theClass))
       throw new RuntimeException(theClass+" not "+xface.getName());
     set(name, theClass.getName());
@@ -2282,6 +2355,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    */
   public Path getLocalPath(String dirsProp, String path)
     throws IOException {
+    LOG.info("dog----dirsProp:"+dirsProp+" path:"+path);
     String[] dirs = getTrimmedStrings(dirsProp);
     int hashCode = path.hashCode();
     FileSystem fs = FileSystem.getLocal(this);
@@ -2314,6 +2388,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    */
   public File getFile(String dirsProp, String path)
     throws IOException {
+    LOG.info("dog----dirsProp:"+dirsProp+" path:"+path);
     String[] dirs = getTrimmedStrings(dirsProp);
     int hashCode = path.hashCode();
     for (int i = 0; i < dirs.length; i++) {  // try each local dir
@@ -2334,6 +2409,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * @return the url for the named resource.
    */
   public URL getResource(String name) {
+    LOG.info("dog----name:"+name);
     return classLoader.getResource(name);
   }
   
@@ -2345,6 +2421,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * @return an input stream attached to the resource.
    */
   public InputStream getConfResourceAsInputStream(String name) {
+    LOG.info("dog----name:"+name);
     try {
       URL url= getResource(name);
 
@@ -2369,6 +2446,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * @return a reader attached to the resource.
    */
   public Reader getConfResourceAsReader(String name) {
+    LOG.info("dog----name:"+name);
     try {
       URL url= getResource(name);
 
@@ -2391,6 +2469,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * @return final parameter set.
    */
   public Set<String> getFinalParameters() {
+    LOG.info("dog");
     Set<String> setFinalParams = Collections.newSetFromMap(
         new ConcurrentHashMap<String, Boolean>());
     setFinalParams.addAll(finalParameters);
@@ -2398,6 +2477,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
   }
 
   protected synchronized Properties getProps() {
+    LOG.info("dog");
     if (properties == null) {
       properties = new Properties();
       Map<String, String[]> backup =
@@ -2447,6 +2527,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
     // methods that allow non-strings to be put into configurations are removed,
     // we could replace properties with a Map<String,String> and get rid of this
     // code.
+    LOG.info("dog");
     Map<String,String> result = new HashMap<String,String>();
     for(Map.Entry<Object,Object> item: getProps().entrySet()) {
       if (item.getKey() instanceof String &&
@@ -2459,6 +2540,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
 
   private Document parse(DocumentBuilder builder, URL url)
       throws IOException, SAXException {
+    LOG.info("dog");
     if (!quietmode) {
       LOG.debug("parsing URL " + url);
     }
@@ -2470,6 +2552,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
 
   private Document parse(DocumentBuilder builder, InputStream is,
       String systemId) throws IOException, SAXException {
+    LOG.info("dog----systemId:"+systemId);
     if (!quietmode) {
       LOG.debug("parsing input stream " + is);
     }
@@ -2487,6 +2570,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
   private void loadResources(Properties properties,
                              ArrayList<Resource> resources,
                              boolean quiet) {
+    LOG.info("dog----quiet:"+quiet);
     if(loadDefaults) {
       for (String resource : defaultResources) {
         loadResource(properties, new Resource(resource), quiet);
@@ -2508,6 +2592,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
   
   private Resource loadResource(Properties properties, Resource wrapper, boolean quiet) {
     String name = UNKNOWN_RESOURCE;
+    LOG.info("dog----load:quiet:"+quiet);
     try {
       Object resource = wrapper.getResource();
       name = wrapper.getName();
@@ -2650,6 +2735,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
   }
 
   private void overlay(Properties to, Properties from) {
+    LOG.info("dog----to from");
     for (Entry<Object, Object> entry: from.entrySet()) {
       to.put(entry.getKey(), entry.getValue());
     }
@@ -2657,6 +2743,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
   
   private void loadProperty(Properties properties, String name, String attr,
       String value, boolean finalParameter, String[] source) {
+    LOG.info("dog----name:"+name+" attr:"+attr+" value:"+value+" finalParameter:"+finalParameter+" source:"+source.toString());
     if (value != null || allowNullValueProperties) {
       if (!finalParameters.contains(attr)) {
         if (value==null && allowNullValueProperties) {
@@ -2683,6 +2770,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * @param out the output stream to write to.
    */
   public void writeXml(OutputStream out) throws IOException {
+    LOG.info("dog----outputstream");
     writeXml(new OutputStreamWriter(out, "UTF-8"));
   }
 
@@ -2693,6 +2781,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * @param out the writer to write to.
    */
   public void writeXml(Writer out) throws IOException {
+    LOG.info("dog----writer");
     Document doc = asXmlDocument();
 
     try {
@@ -2714,6 +2803,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * Return the XML DOM corresponding to this Configuration.
    */
   private synchronized Document asXmlDocument() throws IOException {
+    LOG.info("dog----a");
     Document doc;
     try {
       doc =
@@ -2808,6 +2898,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * @return the correct class loader.
    */
   public ClassLoader getClassLoader() {
+    LOG.info("dog----classLoader:"+classLoader.toString());
     return classLoader;
   }
   
@@ -2853,6 +2944,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    *              to turn it off.
    */
   public synchronized void setQuietMode(boolean quietmode) {
+    LOG.info("dog----quitemode:"+quietmode);
     this.quietmode = quietmode;
   }
 
@@ -2867,6 +2959,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
 
   @Override
   public void readFields(DataInput in) throws IOException {
+    LOG.info("dog");
     clear();
     int size = WritableUtils.readVInt(in);
     for(int i=0; i < size; ++i) {
@@ -2883,6 +2976,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
   //@Override
   @Override
   public void write(DataOutput out) throws IOException {
+    LOG.info("dog");
     Properties props = getProps();
     WritableUtils.writeVInt(out, props.size());
     for(Map.Entry<Object, Object> item: props.entrySet()) {
@@ -2900,7 +2994,6 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    */
   public Map<String,String> getValByRegex(String regex) {
     Pattern p = Pattern.compile(regex);
-
     Map<String,String> result = new HashMap<String,String>();
     Matcher m;
 
@@ -2914,6 +3007,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
         }
       }
     }
+    LOG.info("dog----regex:"+regex+" result:"+result);
     return result;
   }
 
@@ -2924,6 +3018,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
   private static abstract class NegativeCacheSentinel {}
 
   public static void dumpDeprecatedKeys() {
+    LOG.info("dog");
     DeprecationContext deprecations = deprecationContext.get();
     for (Map.Entry<String, DeprecatedKeyInfo> entry :
         deprecations.getDeprecatedKeyMap().entrySet()) {
@@ -2940,6 +3035,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * deprecated then always return false
    */
   public static boolean hasWarnedDeprecation(String name) {
+    LOG.info("dog----name:"+name);
     DeprecationContext deprecations = deprecationContext.get();
     if(deprecations.getDeprecatedKeyMap().containsKey(name)) {
       if(deprecations.getDeprecatedKeyMap().get(name).accessed.get()) {
