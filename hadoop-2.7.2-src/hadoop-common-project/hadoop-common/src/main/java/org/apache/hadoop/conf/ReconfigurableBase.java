@@ -23,6 +23,7 @@ import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import org.apache.commons.logging.*;
+import org.apache.hadoop.util.Options;
 import org.apache.hadoop.util.Time;
 import org.apache.hadoop.conf.ReconfigurationUtil.PropertyChange;
 
@@ -40,9 +41,9 @@ import java.util.Map;
  */
 public abstract class ReconfigurableBase 
   extends Configured implements Reconfigurable {
-  
-  private static final Log LOG =
-    LogFactory.getLog(ReconfigurableBase.class);
+
+  public static final Log LOG=LogFactory.getLog(ReconfigurableBase.class);
+//  private static final Log LOG = LogFactory.getLog(ReconfigurableBase.class);
   // Use for testing purpose.
   private ReconfigurationUtil reconfigurationUtil = new ReconfigurationUtil();
 
@@ -85,6 +86,7 @@ public abstract class ReconfigurableBase
 
   @VisibleForTesting
   public void setReconfigurationUtil(ReconfigurationUtil ru) {
+    LOG.info("dog----ru:"+ru.toString());
     reconfigurationUtil = Preconditions.checkNotNull(ru);
   }
 
@@ -101,23 +103,27 @@ public abstract class ReconfigurableBase
     private ReconfigurableBase parent;
 
     ReconfigurationThread(ReconfigurableBase base) {
+      LOG.info("dog----base:"+base);
       this.parent = base;
     }
 
     // See {@link ReconfigurationServlet#applyChanges}
     public void run() {
       LOG.info("Starting reconfiguration task.");
+      LOG.info("dog----run");
       Configuration oldConf = this.parent.getConf();
       Configuration newConf = new Configuration();
       Collection<PropertyChange> changes =
           this.parent.getChangedProperties(newConf, oldConf);
       Map<PropertyChange, Optional<String>> results = Maps.newHashMap();
+      LOG.info("dog----result:"+results);
       for (PropertyChange change : changes) {
         String errorMessage = null;
         if (!this.parent.isPropertyReconfigurable(change.prop)) {
           errorMessage = "Property " + change.prop +
               " is not reconfigurable";
           LOG.info(errorMessage);
+          LOG.info("dog----errorMessge:"+errorMessage);
           results.put(change, Optional.of(errorMessage));
           continue;
         }
@@ -125,6 +131,11 @@ public abstract class ReconfigurableBase
             + ((change.oldVal == null) ? "<default>" : change.oldVal)
             + "\" to \"" + ((change.newVal == null) ? "<default>" : change.newVal)
             + "\".");
+
+        LOG.info("dog----"+"Change property: " + change.prop + " from \""
+                + ((change.oldVal == null) ? "<default>" : change.oldVal)
+                + "\" to \"" + ((change.newVal == null) ? "<default>" : change.newVal)
+                + "\".");
         try {
           this.parent.reconfigurePropertyImpl(change.prop, change.newVal);
         } catch (ReconfigurationException e) {
@@ -145,12 +156,15 @@ public abstract class ReconfigurableBase
    * Start a reconfiguration task to reload configuration in background.
    */
   public void startReconfigurationTask() throws IOException {
+    LOG.info("dog----reconfigLock:"+reconfigLock);
     synchronized (reconfigLock) {
+      LOG.info("dog----shouldRun:"+shouldRun);
       if (!shouldRun) {
         String errorMessage = "The server is stopped.";
         LOG.warn(errorMessage);
         throw new IOException(errorMessage);
       }
+      LOG.info("dog----reconfigThread:"+reconfigThread.toString());
       if (reconfigThread != null) {
         String errorMessage = "Another reconfiguration task is running.";
         LOG.warn(errorMessage);
@@ -201,12 +215,15 @@ public abstract class ReconfigurableBase
   @Override
   public final String reconfigureProperty(String property, String newVal) 
     throws ReconfigurationException {
+    LOG.info("dog----");
     if (isPropertyReconfigurable(property)) {
       LOG.info("changing property " + property + " to " + newVal);
       String oldVal;
+      LOG.info("dog----property:"+property+" newVal:"+newVal);
       synchronized(getConf()) {
         oldVal = getConf().get(property);
         reconfigurePropertyImpl(property, newVal);
+        LOG.info("dog----oldVal:"+oldVal);
         if (newVal != null) {
           getConf().set(property, newVal);
         } else {

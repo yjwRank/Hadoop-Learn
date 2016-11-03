@@ -42,11 +42,11 @@ import org.apache.hadoop.util.StringUtils;
  *
  */
 public class ReconfigurationServlet extends HttpServlet {
-  
+
+  public static final Log LOG=LogFactory.getLog(ReconfigurationServlet.class);
   private static final long serialVersionUID = 1L;
 
-  private static final Log LOG =
-    LogFactory.getLog(ReconfigurationServlet.class);
+//  private static final Log LOG = LogFactory.getLog(ReconfigurationServlet.class);
 
   // the prefix used to fing the attribute holding the reconfigurable 
   // for a given request
@@ -64,6 +64,7 @@ public class ReconfigurationServlet extends HttpServlet {
     LOG.info("servlet path: " + req.getServletPath());
     LOG.info("getting attribute: " + CONF_SERVLET_RECONFIGURABLE_PREFIX +
              req.getServletPath());
+    LOG.info("dog----");
     return (Reconfigurable)
       this.getServletContext().getAttribute(CONF_SERVLET_RECONFIGURABLE_PREFIX +
                                             req.getServletPath());
@@ -76,6 +77,7 @@ public class ReconfigurationServlet extends HttpServlet {
     out.print("</head><body>\n");
     out.printf("<h1>%s Reconfiguration Utility</h1>%n",
                StringEscapeUtils.escapeHtml(nodeName));
+    LOG.info("dog----nodeName:"+nodeName);
   }
 
   private void printFooter(PrintWriter out) {
@@ -94,7 +96,7 @@ public class ReconfigurationServlet extends HttpServlet {
                                                oldConf);
 
     boolean changeOK = true;
-    
+    LOG.info("dog");
     out.println("<form action=\"\" method=\"post\">");
     out.println("<table border=\"1\">");
     out.println("<tr><th>Property</th><th>Old value</th>");
@@ -131,6 +133,7 @@ public class ReconfigurationServlet extends HttpServlet {
 
   @SuppressWarnings("unchecked")
   private Enumeration<String> getParams(HttpServletRequest req) {
+    LOG.info("dog----");
     return req.getParameterNames();
   }
 
@@ -143,13 +146,14 @@ public class ReconfigurationServlet extends HttpServlet {
     Configuration newConf = new Configuration();
 
     Enumeration<String> params = getParams(req);
-
+    LOG.info("dog----oldConf:"+oldConf);
     synchronized(oldConf) {
       while (params.hasMoreElements()) {
         String rawParam = params.nextElement();
         String param = StringEscapeUtils.unescapeHtml(rawParam);
         String value =
           StringEscapeUtils.unescapeHtml(req.getParameter(rawParam));
+        LOG.info("dog----rawParam:"+rawParam+" param:"+param+" value:"+value);
         if (value != null) {
           if (value.equals(newConf.getRaw(param)) || value.equals("default") ||
               value.equals("null") || value.isEmpty()) {
@@ -209,6 +213,7 @@ public class ReconfigurationServlet extends HttpServlet {
     printHeader(out, nodeName);
     printConf(out, reconf);
     printFooter(out);
+    LOG.info("dog----doGet");
   }
 
   @Override
@@ -222,7 +227,7 @@ public class ReconfigurationServlet extends HttpServlet {
     String nodeName = reconf.getClass().getCanonicalName();
 
     printHeader(out, nodeName);
-
+    LOG.info("dog----doPost");
     try { 
       applyChanges(out, reconf, req);
     } catch (ReconfigurationException e) {

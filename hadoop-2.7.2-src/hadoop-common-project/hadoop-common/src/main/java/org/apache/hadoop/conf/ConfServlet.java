@@ -25,6 +25,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.http.HttpServer2;
@@ -35,6 +37,8 @@ import org.apache.hadoop.http.HttpServer2;
 @InterfaceAudience.LimitedPrivate({"HDFS", "MapReduce"})
 @InterfaceStability.Unstable
 public class ConfServlet extends HttpServlet {
+
+  public static final Log LOG= LogFactory.getLog(ConfServlet.class);
   private static final long serialVersionUID = 1L;
 
   private static final String FORMAT_JSON = "json";
@@ -49,19 +53,21 @@ public class ConfServlet extends HttpServlet {
     Configuration conf = (Configuration)getServletContext().getAttribute(
         HttpServer2.CONF_CONTEXT_ATTRIBUTE);
     assert conf != null;
+    LOG.info("dog----conf:"+conf.toString());
     return conf;
   }
 
   @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-
+    LOG.info("dog---doGet");
     if (!HttpServer2.isInstrumentationAccessAllowed(getServletContext(),
                                                    request, response)) {
       return;
     }
 
     String format = request.getParameter(FORMAT_PARAM);
+    LOG.info("dog----format:"+format);
     if (null == format) {
       format = FORMAT_XML;
     }
@@ -86,6 +92,7 @@ public class ConfServlet extends HttpServlet {
    */
   static void writeResponse(Configuration conf, Writer out, String format)
     throws IOException, BadFormatException {
+    LOG.info("dog----format:"+format);
     if (FORMAT_JSON.equals(format)) {
       Configuration.dumpConfiguration(conf, out);
     } else if (FORMAT_XML.equals(format)) {
