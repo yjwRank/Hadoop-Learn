@@ -19,6 +19,8 @@ package org.apache.hadoop.crypto.key.kms;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.Charsets;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.crypto.key.KeyProvider;
@@ -83,7 +85,7 @@ import com.google.common.base.Strings;
 @InterfaceAudience.Private
 public class KMSClientProvider extends KeyProvider implements CryptoExtension,
     KeyProviderDelegationTokenExtension.DelegationTokenExtension {
-
+  public static final Log LOG= LogFactory.getLog(KMSClientProvider.class);
   private static final String INVALID_SIGNATURE = "Invalid signature";
 
   private static final String ANONYMOUS_REQUESTS_DISALLOWED = "Anonymous requests are disallowed";
@@ -126,6 +128,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
         Queue<EncryptedKeyVersion> keyQueue, int numEKVs) throws IOException {
       checkNotNull(keyName, "keyName");
       Map<String, String> params = new HashMap<String, String>();
+      LOG.info("dog----keyName:"+keyName+" numEKVs:"+numEKVs);
       params.put(KMSRESTConstants.EEK_OP, KMSRESTConstants.EEK_GENERATE);
       params.put(KMSRESTConstants.EEK_NUM_KEYS, "" + numEKVs);
       URL url = createURL(KMSRESTConstants.KEY_RESOURCE, keyName,
@@ -143,8 +146,10 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
   public static class KMSEncryptedKeyVersion extends EncryptedKeyVersion {
     public KMSEncryptedKeyVersion(String keyName, String keyVersionName,
         byte[] iv, String encryptedVersionName, byte[] keyMaterial) {
+
       super(keyName, keyVersionName, iv, new KMSKeyVersion(null,
           encryptedVersionName, keyMaterial));
+      LOG.info("dog----");
     }
   }
 
@@ -152,6 +157,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
   private static List<EncryptedKeyVersion>
       parseJSONEncKeyVersion(String keyName, List valueList) {
     List<EncryptedKeyVersion> ekvs = new LinkedList<EncryptedKeyVersion>();
+    LOG.info("dog----keyName:"+keyName+" valueList:"+valueList.toString());
     if (!valueList.isEmpty()) {
       for (Object values : valueList) {
         Map valueMap = (Map) values;
@@ -175,7 +181,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
         byte[] encKeyMaterial = Base64.decodeBase64(checkNotNull((String)
                 encValueMap.get(KMSRESTConstants.MATERIAL_FIELD),
                 KMSRESTConstants.MATERIAL_FIELD));
-
+        LOG.info("dog----versionName:"+versionName+" iv:"+String.valueOf(iv)+" encValueMap:"+encValueMap+" encVersionName:"+encVersionName+" encKeyMaterial:"+String.valueOf(encKeyMaterial));
         ekvs.add(new KMSEncryptedKeyVersion(keyName, versionName, iv,
             encVersionName, encKeyMaterial));
       }
@@ -185,6 +191,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
 
   private static KeyVersion parseJSONKeyVersion(Map valueMap) {
     KeyVersion keyVersion = null;
+    LOG.info("dog----valueMap:"+valueMap.toString());
     if (!valueMap.isEmpty()) {
       byte[] material = (valueMap.containsKey(KMSRESTConstants.MATERIAL_FIELD))
           ? Base64.decodeBase64((String) valueMap.get(KMSRESTConstants.MATERIAL_FIELD))
@@ -199,6 +206,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
   @SuppressWarnings("unchecked")
   private static Metadata parseJSONMetadata(Map valueMap) {
     Metadata metadata = null;
+    LOG.info("dog----valueMap:"+valueMap.toString());
     if (!valueMap.isEmpty()) {
       metadata = new KMSMetadata(
           (String) valueMap.get(KMSRESTConstants.CIPHER_FIELD),
@@ -212,6 +220,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
   }
 
   private static void writeJson(Map map, OutputStream os) throws IOException {
+    LOG.info("dog---map:"+map.toString());
     Writer writer = new OutputStreamWriter(os, Charsets.UTF_8);
     ObjectMapper jsonMapper = new ObjectMapper();
     jsonMapper.writerWithDefaultPrettyPrinter().writeValue(writer, map);
@@ -241,9 +250,11 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
     @Override
     public KeyProvider createProvider(URI providerUri, Configuration conf)
         throws IOException {
+      LOG.info("dog----providerUri:"+providerUri+" conf:"+conf.toString());
       if (SCHEME_NAME.equals(providerUri.getScheme())) {
         URL origUrl = new URL(extractKMSPath(providerUri).toString());
         String authority = origUrl.getAuthority();
+        LOG.info("dog----origUrl:"+origUrl+" authority:"+authority);
         // check for ';' which delimits the backup hosts
         if (Strings.isNullOrEmpty(authority)) {
           throw new IOException(
@@ -271,6 +282,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
     private KeyProvider createProvider(URI providerUri, Configuration conf,
         URL origUrl, int port, String hostsPart) throws IOException {
       String[] hosts = hostsPart.split(";");
+      LOG.info("dog----providerUri:"+providerUri+" conf:"+conf.toString()+" origUrl:"+origUrl+" port:"+port+" hostsPart:"+hostsPart);
       if (hosts.length == 1) {
         return new KMSClientProvider(providerUri, conf);
       } else {
@@ -292,6 +304,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
 
   public static <T> T checkNotNull(T o, String name)
       throws IllegalArgumentException {
+    LOG.info("dog----o:"+o);
     if (o == null) {
       throw new IllegalArgumentException("Parameter '" + name +
           "' cannot be null");
@@ -362,6 +375,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
   public KMSClientProvider(URI uri, Configuration conf) throws IOException {
     super(conf);
     kmsUrl = createServiceURL(extractKMSPath(uri));
+    LOG.info("dog----kmsUrl:"+kmsUrl+" uri:"+uri);
     if ("https".equalsIgnoreCase(new URL(kmsUrl).getProtocol())) {
       sslFactory = new SSLFactory(SSLFactory.Mode.CLIENT, conf);
       try {
@@ -401,14 +415,18 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
         UserGroupInformation.AuthenticationMethod.PROXY) ? UserGroupInformation
             .getCurrentUser().getRealUser() : UserGroupInformation
             .getCurrentUser();
+
+    LOG.info("dog----timeout:"+timeout+" authRetry:"+authRetry+" configurator:"+configurator.toString()+" encKeyVersionQueue:"+encKeyVersionQueue.toString());
   }
 
   private static Path extractKMSPath(URI uri) throws MalformedURLException, IOException {
+    LOG.info("dog----uri:"+uri.toString()+" return:"+ProviderUtils.unnestUri(uri).toString());
     return ProviderUtils.unnestUri(uri);
   }
 
   private static String createServiceURL(Path path) throws IOException {
     String str = new URL(path.toString()).toExternalForm();
+    LOG.info("dog----str:"+str);
     if (str.endsWith("/")) {
       str = str.substring(0, str.length() - 1);
     }
@@ -418,6 +436,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
 
   private URL createURL(String collection, String resource, String subResource,
       Map<String, ?> parameters) throws IOException {
+    LOG.info("dog----collection:"+collection+" resource:"+resource+" subResource:"+subResource+" parametrs:"+parameters.toString());
     try {
       StringBuilder sb = new StringBuilder();
       sb.append(kmsUrl);
@@ -430,6 +449,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
           }
         }
       }
+      LOG.info("dog----sb:"+sb.toString());
       URIBuilder uriBuilder = new URIBuilder(sb.toString());
       if (parameters != null) {
         for (Map.Entry<String, ?> param : parameters.entrySet()) {
@@ -443,6 +463,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
           }
         }
       }
+      LOG.info("dog----return:"+uriBuilder.build().toURL().toString());
       return uriBuilder.build().toURL();
     } catch (URISyntaxException ex) {
       throw new IOException(ex);
@@ -451,6 +472,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
 
   private HttpURLConnection configureConnection(HttpURLConnection conn)
       throws IOException {
+    LOG.info("dog----conn:"+conn.toString());
     if (sslFactory != null) {
       HttpsURLConnection httpsConn = (HttpsURLConnection) conn;
       try {
@@ -460,12 +482,14 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
       }
       httpsConn.setHostnameVerifier(sslFactory.getHostnameVerifier());
     }
+    LOG.info("dog----conn:"+conn.toString());
     return conn;
   }
 
   private HttpURLConnection createConnection(final URL url, String method)
       throws IOException {
     HttpURLConnection conn;
+    LOG.info("dog----method:"+method+" url:"+url);
     try {
       // if current UGI is different from UGI at constructor time, behave as
       // proxyuser
@@ -473,7 +497,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
       final String doAsUser = (currentUgi.getAuthenticationMethod() ==
           UserGroupInformation.AuthenticationMethod.PROXY)
                               ? currentUgi.getShortUserName() : null;
-
+      LOG.info("dog----currentUgi:"+currentUgi.toString()+" doAsUser:"+doAsUser);
       // creating the HTTP connection using the current UGI at constructor time
       conn = actualUgi.doAs(new PrivilegedExceptionAction<HttpURLConnection>() {
         @Override
@@ -508,6 +532,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
       int expectedResponse, Class<T> klass, int authRetryCount)
       throws IOException {
     T ret = null;
+    LOG.info("dog----ret:"+ret.toString());
     try {
       if (jsonOutput != null) {
         writeJson(jsonOutput, conn.getOutputStream());
@@ -516,6 +541,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
       conn.getInputStream().close();
       throw ex;
     }
+    LOG.info("dog----conn:"+conn.toString()+" jsonOutput:"+jsonOutput.toString()+" expectedResponse:"+expectedResponse+" ");
     if ((conn.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN
         && (conn.getResponseMessage().equals(ANONYMOUS_REQUESTS_DISALLOWED) ||
             conn.getResponseMessage().contains(INVALID_SIGNATURE)))
@@ -578,6 +604,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
         versionName, null, null);
     HttpURLConnection conn = createConnection(url, HTTP_GET);
     Map response = call(conn, null, HttpURLConnection.HTTP_OK, Map.class);
+    LOG.info("dog----versionName:"+versionName+" url:"+url.toString()+"  response:"+response.toString()+" return:"+parseJSONKeyVersion(response));
     return parseJSONKeyVersion(response);
   }
 
@@ -588,6 +615,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
         KMSRESTConstants.CURRENT_VERSION_SUB_RESOURCE, null);
     HttpURLConnection conn = createConnection(url, HTTP_GET);
     Map response = call(conn, null, HttpURLConnection.HTTP_OK, Map.class);
+    LOG.info("dog----name:"+name+" url:"+url.toString()+" conn:"+conn.toString()+" response:"+response.toString());
     return parseJSONKeyVersion(response);
   }
 
@@ -598,6 +626,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
         null);
     HttpURLConnection conn = createConnection(url, HTTP_GET);
     List response = call(conn, null, HttpURLConnection.HTTP_OK, List.class);
+    LOG.info("dog----url:"+url.toString()+" conn:"+conn.toString()+" response:"+response.toString()+" return:"+(List<String>) response);
     return (List<String>) response;
   }
 
@@ -613,6 +642,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
     List<String[]> list = new ArrayList<String[]>();
     List<String> batch = new ArrayList<String>();
     int batchLen = 0;
+    LOG.info("dog----keyNames:"+keyNames.toString());
     for (String name : keyNames) {
       int additionalLen = KMSRESTConstants.KEY.length() + 1 + name.length();
       batchLen += additionalLen;
@@ -627,6 +657,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
     if (!batch.isEmpty()) {
       list.add(batch.toArray(new String[batch.size()]));
     }
+    LOG.info("dog----list:"+list.toString());
     return list;
   }
 
@@ -635,6 +666,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
   public Metadata[] getKeysMetadata(String ... keyNames) throws IOException {
     List<Metadata> keysMetadata = new ArrayList<Metadata>();
     List<String[]> keySets = createKeySets(keyNames);
+    LOG.info("dog----keyNames:"+keyNames+" keySets:"+keySets.toString());
     for (String[] keySet : keySets) {
       if (keyNames.length > 0) {
         Map<String, Object> queryStr = new HashMap<String, Object>();
@@ -648,6 +680,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
         }
       }
     }
+    LOG.info("dog----return:"+keysMetadata.toArray(new Metadata[keysMetadata.size()]).toString());
     return keysMetadata.toArray(new Metadata[keysMetadata.size()]);
   }
 
@@ -676,12 +709,15 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
     conn.setRequestProperty(CONTENT_TYPE, APPLICATION_JSON_MIME);
     Map response = call(conn, jsonKey, HttpURLConnection.HTTP_CREATED,
         Map.class);
+
+    LOG.info("dog----name:"+name+" material:"+String.valueOf(material)+"  Options:"+options.toString()+" url:"+url.toString()+" response:"+response.toString());
     return parseJSONKeyVersion(response);
   }
 
   @Override
   public KeyVersion createKey(String name, Options options)
       throws NoSuchAlgorithmException, IOException {
+    LOG.info("dog----name:"+name+" options:"+options.toString());
     return createKeyInternal(name, null, options);
   }
 
@@ -689,6 +725,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
   public KeyVersion createKey(String name, byte[] material, Options options)
       throws IOException {
     checkNotNull(material, "material");
+    LOG.info("dog----name:"+name+" material:"+material+" options:"+options.toString());
     try {
       return createKeyInternal(name, material, options);
     } catch (NoSuchAlgorithmException ex) {
@@ -711,6 +748,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
         HttpURLConnection.HTTP_OK, Map.class);
     KeyVersion keyVersion = parseJSONKeyVersion(response);
     encKeyVersionQueue.drain(name);
+    LOG.info("dog----name:"+name+" material:"+String.valueOf(material)+" jsonMaterial:"+jsonMaterial.toString()+" url:"+url.toString()+" response:"+response.toString()+" keyversion:"+keyVersion);
     return keyVersion;
   }
 
@@ -718,6 +756,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
   @Override
   public KeyVersion rollNewVersion(String name)
       throws NoSuchAlgorithmException, IOException {
+    LOG.info("dog----name:"+name);
     return rollNewVersionInternal(name, null);
   }
 
@@ -735,7 +774,9 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
   @Override
   public EncryptedKeyVersion generateEncryptedKey(
       String encryptionKeyName) throws IOException, GeneralSecurityException {
+    LOG.info("dog----encrpytionKeyName:"+encryptionKeyName);
     try {
+      LOG.info("dog----enKeyVersionQueue:"+encKeyVersionQueue.toString());
       return encKeyVersionQueue.getNext(encryptionKeyName);
     } catch (ExecutionException e) {
       if (e.getCause() instanceof SocketTimeoutException) {
@@ -777,6 +818,8 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
     conn.setRequestProperty(CONTENT_TYPE, APPLICATION_JSON_MIME);
     Map response =
         call(conn, jsonPayload, HttpURLConnection.HTTP_OK, Map.class);
+    LOG.info("dog----encrytedKeyVersion:"+encryptedKeyVersion.toString()+" params:"+params.toString()+" jsonPayload:"+jsonPayload.toString()+" url:"+url.toString()+
+    " conn:"+conn.toString()+" response:"+response.toString()+" return:"+parseJSONKeyVersion(response).toString());
     return parseJSONKeyVersion(response);
   }
 
@@ -794,6 +837,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
         versions.add(parseJSONKeyVersion((Map) obj));
       }
     }
+    LOG.info("dog----name:"+name+" url:"+url.toString()+" conn:"+conn.toString()+" versions:"+versions.toString());
     return versions;
   }
 
@@ -804,6 +848,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
         KMSRESTConstants.METADATA_SUB_RESOURCE, null);
     HttpURLConnection conn = createConnection(url, HTTP_GET);
     Map response = call(conn, null, HttpURLConnection.HTTP_OK, Map.class);
+    LOG.info("dog----name:"+name+" url:"+url.toString()+" conn:"+conn.toString()+" response:"+response.toString()+" return:"+parseJSONMetadata(response));
     return parseJSONMetadata(response);
   }
 
@@ -813,6 +858,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
     URL url = createURL(KMSRESTConstants.KEY_RESOURCE, name, null, null);
     HttpURLConnection conn = createConnection(url, HTTP_DELETE);
     call(conn, null, HttpURLConnection.HTTP_OK, null);
+    LOG.info("dog----name:"+name+" url:"+url.toString()+" conn:"+conn.toString());
   }
 
   @Override
@@ -826,6 +872,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
   @Override
   public void warmUpEncryptedKeys(String... keyNames)
       throws IOException {
+    LOG.info("dog----keyNames:"+keyNames.toString());
     try {
       encKeyVersionQueue.initializeQueuesForKeys(keyNames);
     } catch (ExecutionException e) {
@@ -840,6 +887,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
 
   @VisibleForTesting
   public int getEncKeyQueueSize(String keyName) throws IOException {
+    LOG.info("dog----keyName:"+keyName);
     try {
       return encKeyVersionQueue.getSize(keyName);
     } catch (ExecutionException e) {
@@ -853,6 +901,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
     Token<?>[] tokens = null;
     Text dtService = getDelegationTokenService();
     Token<?> token = credentials.getToken(dtService);
+    LOG.info("dog----renewer:"+renewer+" credentials:"+credentials.toString());
     if (token == null) {
       final URL url = createURL(null, null, null, null);
       final DelegationTokenAuthenticatedURL authUrl =
@@ -888,6 +937,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
         throw new IOException(e);
       }
     }
+    LOG.info("dog----tokens:"+tokens.toString());
     return tokens;
   }
   
@@ -896,6 +946,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
     InetSocketAddress addr = new InetSocketAddress(url.getHost(),
         url.getPort());
     Text dtService = SecurityUtil.buildTokenService(addr);
+    LOG.info("dog----url:"+url.toString()+" dtService:"+dtService.toString());
     return dtService;
   }
 
@@ -904,6 +955,7 @@ public class KMSClientProvider extends KeyProvider implements CryptoExtension,
    */
   @Override
   public void close() throws IOException {
+    LOG.info("dog----close");
     try {
       encKeyVersionQueue.shutdown();
     } catch (Exception e) {

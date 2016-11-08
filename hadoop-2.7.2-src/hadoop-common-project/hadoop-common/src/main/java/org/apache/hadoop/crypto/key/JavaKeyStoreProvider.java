@@ -20,6 +20,8 @@ package org.apache.hadoop.crypto.key;
 
 import com.google.common.base.Preconditions;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -87,9 +89,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 @InterfaceAudience.Private
 public class JavaKeyStoreProvider extends KeyProvider {
+
+  public static final Log LOG= LogFactory.getLog(JavaKeyStoreProvider.class);
+
   private static final String KEY_METADATA = "KeyMetadata";
-  private static Logger LOG =
-      LoggerFactory.getLogger(JavaKeyStoreProvider.class);
+ // private static Logger LOG =LoggerFactory.getLogger(JavaKeyStoreProvider.class);
 
   public static final String SCHEME_NAME = "jceks";
 
@@ -124,6 +128,7 @@ public class JavaKeyStoreProvider extends KeyProvider {
     changed = other.changed;
     readLock = other.readLock;
     writeLock = other.writeLock;
+    LOG.info("dog----other:"+other.toString());
   }
 
   private JavaKeyStoreProvider(URI uri, Configuration conf) throws IOException {
@@ -131,13 +136,16 @@ public class JavaKeyStoreProvider extends KeyProvider {
     this.uri = uri;
     path = ProviderUtils.unnestUri(uri);
     fs = path.getFileSystem(conf);
+    LOG.info("dog----uri:"+uri.toString()+" path:"+path.toString());
     // Get the password file from the conf, if not present from the user's
     // environment var
     if (System.getenv().containsKey(KEYSTORE_PASSWORD_ENV_VAR)) {
       password = System.getenv(KEYSTORE_PASSWORD_ENV_VAR).toCharArray();
     }
+    LOG.info("dog----password:"+String.valueOf(password));
     if (password == null) {
       String pwFile = conf.get(KEYSTORE_PASSWORD_FILE_KEY);
+      LOG.info("dog----pwFile:"+pwFile);
       if (pwFile != null) {
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         URL pwdFile = cl.getResource(pwFile);
@@ -158,6 +166,7 @@ public class JavaKeyStoreProvider extends KeyProvider {
       Path newPath = constructNewPath(path);
       keyStore = KeyStore.getInstance(SCHEME_NAME);
       FsPermission perm = null;
+      LOG.info("dog----oldPath:"+oldPath.toString()+" newPath:"+newPath.toString()+" keyStore:"+keyStore.toString());
       if (fs.exists(path)) {
         // flush did not proceed to completion
         // _NEW should not exist
@@ -198,6 +207,7 @@ public class JavaKeyStoreProvider extends KeyProvider {
   private FsPermission tryLoadFromPath(Path path, Path backupPath)
       throws NoSuchAlgorithmException, CertificateException,
       IOException {
+    LOG.info("dog----path:"+path.toString()+" backupPath:"+backupPath.toString());
     FsPermission perm = null;
     try {
       perm = loadFromPath(path, password);
@@ -256,6 +266,7 @@ public class JavaKeyStoreProvider extends KeyProvider {
       LOG.debug("KeyStore initialized anew successfully !!");
       perm = new FsPermission("700");
     }
+    LOG.info("dog----oldPath:"+oldPath.toString()+" newPath:"+newPath.toString());
     return perm;
   }
 
@@ -263,6 +274,7 @@ public class JavaKeyStoreProvider extends KeyProvider {
       throws NoSuchAlgorithmException, CertificateException,
       IOException {
     FsPermission perm = null;
+    LOG.info("dog----pathToLoad:"+pathToLoad.toString()+" pathToDelete:"+pathToDelete.toString());
     try {
       perm = loadFromPath(pathToLoad, password);
       renameOrFail(pathToLoad, path);
@@ -278,10 +290,12 @@ public class JavaKeyStoreProvider extends KeyProvider {
         throw e;
       }
     }
+
     return perm;
   }
 
   private boolean isBadorWrongPassword(IOException ioe) {
+    LOG.info("dog----ioe:"+ioe.toString());
     // As per documentation this is supposed to be the way to figure
     // if password was correct
     if (ioe.getCause() instanceof UnrecoverableKeyException) {
@@ -300,6 +314,7 @@ public class JavaKeyStoreProvider extends KeyProvider {
 
   private FsPermission loadFromPath(Path p, char[] password)
       throws IOException, NoSuchAlgorithmException, CertificateException {
+    LOG.info("dog----p:"+p.toString()+" password:"+String.valueOf(password));
     try (FSDataInputStream in = fs.open(p)) {
       FileStatus s = fs.getFileStatus(p);
       keyStore.load(in, password);
@@ -308,17 +323,20 @@ public class JavaKeyStoreProvider extends KeyProvider {
   }
 
   private Path constructNewPath(Path path) {
+    LOG.info("dog----path:"+path.toString());
     Path newPath = new Path(path.toString() + "_NEW");
     return newPath;
   }
 
   private Path constructOldPath(Path path) {
+    LOG.info("dog----path:"+path.toString());
     Path oldPath = new Path(path.toString() + "_OLD");
     return oldPath;
   }
 
   @Override
   public KeyVersion getKeyVersion(String versionName) throws IOException {
+    LOG.info("dog----versionname:"+versionName);
     readLock.lock();
     try {
       SecretKeySpec key = null;
@@ -336,6 +354,7 @@ public class JavaKeyStoreProvider extends KeyProvider {
       } catch (UnrecoverableKeyException e) {
         throw new IOException("Can't recover key " + key + " from " + path, e);
       }
+      LOG.info("dog----return:"+getBaseName(versionName)+" "+versionName+" "+key.getEncoded());
       return new KeyVersion(getBaseName(versionName), versionName, key.getEncoded());
     } finally {
       readLock.unlock();
@@ -344,6 +363,7 @@ public class JavaKeyStoreProvider extends KeyProvider {
 
   @Override
   public List<String> getKeys() throws IOException {
+    LOG.info("dog----");
     readLock.lock();
     try {
       ArrayList<String> list = new ArrayList<String>();
@@ -360,6 +380,7 @@ public class JavaKeyStoreProvider extends KeyProvider {
       } catch (KeyStoreException e) {
         throw new IOException("Can't get key " + alias + " from " + path, e);
       }
+      LOG.info("dog----list:"+list.toString());
       return list;
     } finally {
       readLock.unlock();
@@ -368,6 +389,7 @@ public class JavaKeyStoreProvider extends KeyProvider {
 
   @Override
   public List<KeyVersion> getKeyVersions(String name) throws IOException {
+    LOG.info("dog----");
     readLock.lock();
     try {
       List<KeyVersion> list = new ArrayList<KeyVersion>();
@@ -384,6 +406,7 @@ public class JavaKeyStoreProvider extends KeyProvider {
           }
         }
       }
+      LOG.info("dog----list:"+list.toString());
       return list;
     } finally {
       readLock.unlock();
@@ -392,6 +415,7 @@ public class JavaKeyStoreProvider extends KeyProvider {
 
   @Override
   public Metadata getMetadata(String name) throws IOException {
+    LOG.info("dog----name:"+name);
     readLock.lock();
     try {
       if (cache.containsKey(name)) {
@@ -428,6 +452,7 @@ public class JavaKeyStoreProvider extends KeyProvider {
                                Options options) throws IOException {
     Preconditions.checkArgument(name.equals(StringUtils.toLowerCase(name)),
         "Uppercase key names are unsupported: %s", name);
+    LOG.info("dog----name:"+name+" material:"+String.valueOf(material)+" options:"+options.toString());
     writeLock.lock();
     try {
       try {
@@ -454,6 +479,7 @@ public class JavaKeyStoreProvider extends KeyProvider {
 
   @Override
   public void deleteKey(String name) throws IOException {
+    LOG.info("dog----name:"+name);
     writeLock.lock();
     try {
       Metadata meta = getMetadata(name);
@@ -487,6 +513,7 @@ public class JavaKeyStoreProvider extends KeyProvider {
 
   KeyVersion innerSetKeyVersion(String name, String versionName, byte[] material,
                                 String cipher) throws IOException {
+    LOG.info("dog----name:"+name+" versionName:"+versionName+" material:"+String.valueOf(material)+" cipher:"+cipher);
     try {
       keyStore.setKeyEntry(versionName, new SecretKeySpec(material, cipher),
           password, null);
@@ -501,6 +528,7 @@ public class JavaKeyStoreProvider extends KeyProvider {
   @Override
   public KeyVersion rollNewVersion(String name,
                                     byte[] material) throws IOException {
+    LOG.info("dog----name:"+name+" material:"+String.valueOf(material));
     writeLock.lock();
     try {
       Metadata meta = getMetadata(name);
@@ -521,6 +549,7 @@ public class JavaKeyStoreProvider extends KeyProvider {
 
   @Override
   public void flush() throws IOException {
+    LOG.info("dog----flush");
     Path newPath = constructNewPath(path);
     Path oldPath = constructOldPath(path);
     Path resetPath = path;
@@ -575,6 +604,7 @@ public class JavaKeyStoreProvider extends KeyProvider {
   }
 
   private void resetKeyStoreState(Path path) {
+    LOG.info("dog----path:"+path.toString());
     LOG.debug("Could not flush Keystore.."
         + "attempting to reset to previous state !!");
     // 1) flush cache
@@ -591,6 +621,7 @@ public class JavaKeyStoreProvider extends KeyProvider {
   private void cleanupNewAndOld(Path newPath, Path oldPath) throws IOException {
     // Rename _NEW to CURRENT
     renameOrFail(newPath, path);
+    LOG.info("dog----newPath:"+newPath.toString()+" oldPath:"+oldPath.toString());
     // Delete _OLD
     if (fs.exists(oldPath)) {
       fs.delete(oldPath, true);
@@ -598,6 +629,7 @@ public class JavaKeyStoreProvider extends KeyProvider {
   }
 
   protected void writeToNew(Path newPath) throws IOException {
+    LOG.info("dog----newPath:"+newPath.toString());
     try (FSDataOutputStream out =
         FileSystem.create(fs, newPath, permissions);) {
       keyStore.store(out, password);
@@ -614,6 +646,7 @@ public class JavaKeyStoreProvider extends KeyProvider {
 
   protected boolean backupToOld(Path oldPath)
       throws IOException {
+    LOG.info("dog----old:"+oldPath.toString());
     boolean fileExisted = false;
     if (fs.exists(path)) {
       renameOrFail(path, oldPath);
@@ -632,6 +665,7 @@ public class JavaKeyStoreProvider extends KeyProvider {
 
   private void renameOrFail(Path src, Path dest)
       throws IOException {
+    LOG.info("dog----src:"+src.toString()+" dest:"+dest.toString());
     if (!fs.rename(src, dest)) {
       throw new IOException("Rename unsuccessful : "
           + String.format("'%s' to '%s'", src, dest));

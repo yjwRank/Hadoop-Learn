@@ -70,6 +70,7 @@ public class LoadBalancingKMSClientProvider extends KeyProvider implements
   public LoadBalancingKMSClientProvider(KMSClientProvider[] providers,
       Configuration conf) {
     this(shuffle(providers), Time.monotonicNow(), conf);
+    LOG.info("dog----providers:"+providers.toString());
   }
 
   @VisibleForTesting
@@ -78,6 +79,7 @@ public class LoadBalancingKMSClientProvider extends KeyProvider implements
     super(conf);
     this.providers = providers;
     this.currentIdx = new AtomicInteger((int)(seed % providers.length));
+    LOG.info("dog----providers:"+providers.toString()+" seed:"+seed+" providers.length:"+providers.length);
   }
 
   @VisibleForTesting
@@ -88,6 +90,7 @@ public class LoadBalancingKMSClientProvider extends KeyProvider implements
   private <T> T doOp(ProviderCallable<T> op, int currPos)
       throws IOException {
     IOException ex = null;
+    LOG.info("dog----op:"+op.toString()+" currPos:"+currPos);
     for (int i = 0; i < providers.length; i++) {
       KMSClientProvider provider = providers[(currPos + i) % providers.length];
       try {
@@ -113,10 +116,12 @@ public class LoadBalancingKMSClientProvider extends KeyProvider implements
   }
 
   private int nextIdx() {
+    LOG.info("dog----nextIdx");
     while (true) {
       int current = currentIdx.get();
       int next = (current + 1) % providers.length;
       if (currentIdx.compareAndSet(current, next)) {
+        LOG.info("dog----current:"+current);
         return current;
       }
     }
@@ -137,6 +142,7 @@ public class LoadBalancingKMSClientProvider extends KeyProvider implements
   // This request is sent to all providers in the load-balancing group
   @Override
   public void warmUpEncryptedKeys(String... keyNames) throws IOException {
+    LOG.info("dog----keyNames:"+keyNames.toString());
     for (KMSClientProvider provider : providers) {
       try {
         provider.warmUpEncryptedKeys(keyNames);

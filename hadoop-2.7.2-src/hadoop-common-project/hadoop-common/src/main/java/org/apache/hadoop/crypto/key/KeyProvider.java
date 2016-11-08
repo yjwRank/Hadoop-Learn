@@ -33,6 +33,8 @@ import java.util.Map;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.io.Charsets;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
@@ -50,6 +52,8 @@ import javax.crypto.KeyGenerator;
 @InterfaceAudience.Public
 @InterfaceStability.Unstable
 public abstract class KeyProvider {
+  public static final Log LOG= LogFactory.getLog(KeyProvider.class);
+
   public static final String DEFAULT_CIPHER_NAME =
       "hadoop.security.key.default.cipher";
   public static final String DEFAULT_CIPHER = "AES/CTR/NoPadding";
@@ -69,6 +73,7 @@ public abstract class KeyProvider {
 
     protected KeyVersion(String name, String versionName,
                          byte[] material) {
+      LOG.info("dog----name:"+name+" versionName:"+versionName+" material:"+String.valueOf(material));
       this.name = name;
       this.versionName = versionName;
       this.material = material;
@@ -127,6 +132,8 @@ public abstract class KeyProvider {
 
     protected Metadata(String cipher, int bitLength, String description,
         Map<String, String> attributes, Date created, int versions) {
+      LOG.info("dog----cipher:"+cipher+" bitlength:"+bitLength+" description:"+description+" attributes:"+attributes.toString()+
+      " created:"+created.toString()+" versions:"+versions);
       this.cipher = cipher;
       this.bitLength = bitLength;
       this.description = description;
@@ -181,10 +188,14 @@ public abstract class KeyProvider {
      * @return the algorithm name
      */
     public String getAlgorithm() {
+
       int slash = cipher.indexOf('/');
+      LOG.info("dog----cipher:"+cipher+" slash:"+slash);
       if (slash == - 1) {
+        LOG.info("dog----return:"+cipher);
         return cipher;
       } else {
+        LOG.info("dog----return:"+cipher.substring(0, slash));
         return cipher.substring(0, slash);
       }
     }
@@ -381,6 +392,7 @@ public abstract class KeyProvider {
    * @return a new options object
    */
   public static Options options(Configuration conf) {
+    LOG.info("dog----return:"+new Options(conf).toString());
     return new Options(conf);
   }
 
@@ -392,6 +404,7 @@ public abstract class KeyProvider {
    * @return true if transient, false otherwise
    */
   public boolean isTransient() {
+    LOG.info("dog----false");
     return false;
   }
 
@@ -418,10 +431,12 @@ public abstract class KeyProvider {
    * @throws IOException
    */
   public Metadata[] getKeysMetadata(String... names) throws IOException {
+    LOG.info("dog----names:"+names.toString());
     Metadata[] result = new Metadata[names.length];
     for (int i=0; i < names.length; ++i) {
       result[i] = getMetadata(names[i]);
     }
+    LOG.info("dog----result:"+result.toString());
     return result;
   }
 
@@ -441,10 +456,12 @@ public abstract class KeyProvider {
    * @throws IOException
    */
   public KeyVersion getCurrentKey(String name) throws IOException {
+    LOG.info("dog----name:"+name);
     Metadata meta = getMetadata(name);
     if (meta == null) {
       return null;
     }
+    LOG.info("dog----return:"+getKeyVersion(buildVersionName(name, meta.getVersions() - 1)));
     return getKeyVersion(buildVersionName(name, meta.getVersions() - 1));
   }
 
@@ -473,6 +490,7 @@ public abstract class KeyProvider {
    * @return the algorithm name
    */
   private String getAlgorithm(String cipher) {
+    LOG.info("dog----cipher:"+cipher);
     int slash = cipher.indexOf('/');
     if (slash == -1) {
       return cipher;
@@ -491,10 +509,13 @@ public abstract class KeyProvider {
    */
   protected byte[] generateKey(int size, String algorithm)
       throws NoSuchAlgorithmException {
+    LOG.info("dog----size:"+size+" algorithm:"+algorithm);
     algorithm = getAlgorithm(algorithm);
+    LOG.info("dog----algorithm:"+algorithm);
     KeyGenerator keyGenerator = KeyGenerator.getInstance(algorithm);
     keyGenerator.init(size);
     byte[] key = keyGenerator.generateKey().getEncoded();
+    LOG.info("dog----key:"+String.valueOf(key));
     return key;
   }
 
@@ -514,6 +535,7 @@ public abstract class KeyProvider {
   public KeyVersion createKey(String name, Options options)
       throws NoSuchAlgorithmException, IOException {
     byte[] material = generateKey(options.getBitLength(), options.getCipher());
+    LOG.info("dog----name:"+name+" options:"+options+" material:"+String.valueOf(material));
     return createKey(name, material, options);
   }
 
@@ -557,6 +579,7 @@ public abstract class KeyProvider {
                                                        IOException {
     Metadata meta = getMetadata(name);
     byte[] material = generateKey(meta.getBitLength(), meta.getCipher());
+    LOG.info("dog----name:"+name+" meta:"+meta.toString()+" material:"+material.toString());
     return rollNewVersion(name, material);
   }
 
@@ -574,6 +597,7 @@ public abstract class KeyProvider {
    * @throws IOException
    */
   public static String getBaseName(String versionName) throws IOException {
+    LOG.info("dog----versionName:"+versionName);
     int div = versionName.lastIndexOf('@');
     if (div == -1) {
       throw new IOException("No version in key path " + versionName);
@@ -589,6 +613,7 @@ public abstract class KeyProvider {
    * @return the versionName of the key.
    */
   protected static String buildVersionName(String name, int version) {
+    LOG.info("dog----name:"+name+" version:"+version);
     return name + "@" + version;
   }
 
@@ -600,6 +625,7 @@ public abstract class KeyProvider {
    */
   public static KeyProvider findProvider(List<KeyProvider> providerList,
                                          String keyName) throws IOException {
+    LOG.info("dog----keyName:"+keyName+" provderList:"+providerList.toString());
     for(KeyProvider provider: providerList) {
       if (provider.getMetadata(keyName) != null) {
         return provider;

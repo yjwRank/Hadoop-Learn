@@ -25,6 +25,8 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * A <code>KeyProviderExtension</code> implementation providing a short lived
@@ -33,6 +35,8 @@ import com.google.common.cache.LoadingCache;
  */
 public class CachingKeyProvider extends
     KeyProviderExtension<CachingKeyProvider.CacheExtension> {
+    public static final Log LOG= LogFactory.getLog(CachingKeyProvider.class);
+
 
   static class CacheExtension implements KeyProviderExtension.Extension {
     private final KeyProvider provider;
@@ -42,6 +46,7 @@ public class CachingKeyProvider extends
 
     CacheExtension(KeyProvider prov, long keyTimeoutMillis,
         long currKeyTimeoutMillis) {
+      LOG.info("dog----prov:"+prov.toString()+" keyTimeoutMillis:"+keyTimeoutMillis+" currKeyTimeoutMillis:"+currKeyTimeoutMillis);
       this.provider = prov;
       keyVersionCache =
           CacheBuilder.newBuilder().expireAfterAccess(keyTimeoutMillis,
@@ -82,6 +87,7 @@ public class CachingKeyProvider extends
               return kv;
             }
           });
+      LOG.info("dog----prov:"+prov.toString()+" keyTimeoutMillis:"+keyTimeoutMillis+" currKeyTimeoutMillis:"+currKeyTimeoutMillis);
     }
   }
 
@@ -92,11 +98,14 @@ public class CachingKeyProvider extends
       long currKeyTimeoutMillis) {
     super(keyProvider, new CacheExtension(keyProvider, keyTimeoutMillis,
         currKeyTimeoutMillis));
+    LOG.info("dog----keyProvider:"+keyProvider.toString()+" keyTimeoutMillis:"+keyTimeoutMillis+" currKeyTimeoutMillis:"+currKeyTimeoutMillis);
   }
 
   @Override
   public KeyVersion getCurrentKey(String name) throws IOException {
+    LOG.info("dog----name:"+name);
     try {
+      LOG.info("dog----return:"+getExtension().currentKeyCache.get(name).toString());
       return getExtension().currentKeyCache.get(name);
     } catch (ExecutionException ex) {
       Throwable cause = ex.getCause();
@@ -113,7 +122,9 @@ public class CachingKeyProvider extends
   @Override
   public KeyVersion getKeyVersion(String versionName)
       throws IOException {
+    LOG.info("dog----versionName:"+versionName);
     try {
+      LOG.info("dog----return:"+getExtension().keyVersionCache.get(versionName).toString());
       return getExtension().keyVersionCache.get(versionName);
     } catch (ExecutionException ex) {
       Throwable cause = ex.getCause();
@@ -129,6 +140,7 @@ public class CachingKeyProvider extends
 
   @Override
   public void deleteKey(String name) throws IOException {
+    LOG.info("dog---name:"+name);
     getKeyProvider().deleteKey(name);
     getExtension().currentKeyCache.invalidate(name);
     getExtension().keyMetadataCache.invalidate(name);
@@ -143,6 +155,7 @@ public class CachingKeyProvider extends
     KeyVersion key = getKeyProvider().rollNewVersion(name, material);
     getExtension().currentKeyCache.invalidate(name);
     getExtension().keyMetadataCache.invalidate(name);
+    LOG.info("dog----name:"+name+" material:"+String.valueOf(material)+" key:"+key.toString());
     return key;
   }
 
@@ -152,12 +165,15 @@ public class CachingKeyProvider extends
     KeyVersion key = getKeyProvider().rollNewVersion(name);
     getExtension().currentKeyCache.invalidate(name);
     getExtension().keyMetadataCache.invalidate(name);
+    LOG.info("dog----2name:"+name+" key:"+key.toString());
     return key;
   }
 
   @Override
   public Metadata getMetadata(String name) throws IOException {
+    LOG.info("dog----name:"+name);
     try {
+      LOG.info("dog----return:"+getExtension().keyMetadataCache.get(name));
       return getExtension().keyMetadataCache.get(name);
     } catch (ExecutionException ex) {
       Throwable cause = ex.getCause();
