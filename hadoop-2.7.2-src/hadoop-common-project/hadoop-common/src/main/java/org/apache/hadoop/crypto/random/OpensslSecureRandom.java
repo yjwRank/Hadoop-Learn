@@ -42,9 +42,9 @@ import com.google.common.base.Preconditions;
  */
 @InterfaceAudience.Private
 public class OpensslSecureRandom extends Random {
+  public static final Log LOG=LogFactory.getLog(OpensslSecureRandom.class);
   private static final long serialVersionUID = -7828193502768789584L;
-  private static final Log LOG =
-      LogFactory.getLog(OpensslSecureRandom.class.getName());
+ // private static final Log LOG =LogFactory.getLog(OpensslSecureRandom.class.getName());
   
   /** If native SecureRandom unavailable, use java SecureRandom */
   private java.security.SecureRandom fallback = null;
@@ -66,6 +66,7 @@ public class OpensslSecureRandom extends Random {
   }
   
   public OpensslSecureRandom() {
+    LOG.info("dog----nativeEnabled:"+nativeEnabled);
     if (!nativeEnabled) {
       fallback = new java.security.SecureRandom();
     }
@@ -79,6 +80,7 @@ public class OpensslSecureRandom extends Random {
    */
   @Override
   public void nextBytes(byte[] bytes) {
+    LOG.info("dog----bytes:"+String.valueOf(bytes)+" nativeEnabled:"+nativeEnabled);
     if (!nativeEnabled || !nextRandBytes(bytes)) {
       fallback.nextBytes(bytes);
     }
@@ -101,6 +103,7 @@ public class OpensslSecureRandom extends Random {
    */
   @Override
   final protected int next(int numBits) {
+    LOG.info("dog----numBits:"+numBits);
     Preconditions.checkArgument(numBits >= 0 && numBits <= 32);
     int numBytes = (numBits + 7) / 8;
     byte b[] = new byte[numBytes];
@@ -110,7 +113,7 @@ public class OpensslSecureRandom extends Random {
     for (int i = 0; i < numBytes; i++) {
       next = (next << 8) + (b[i] & 0xFF);
     }
-    
+    LOG.info("dog----return:"+(next >>> (numBytes * 8 - numBits)));
     return next >>> (numBytes * 8 - numBits);
   }
   

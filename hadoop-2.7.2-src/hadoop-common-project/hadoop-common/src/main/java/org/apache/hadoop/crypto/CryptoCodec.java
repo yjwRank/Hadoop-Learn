@@ -56,6 +56,7 @@ public abstract class CryptoCodec implements Configurable {
    */
   public static CryptoCodec getInstance(Configuration conf, 
       CipherSuite cipherSuite) {
+    LOG.info("dog----");
     List<Class<? extends CryptoCodec>> klasses = getCodecClasses(
         conf, cipherSuite);
     if (klasses == null) {
@@ -95,8 +96,10 @@ public abstract class CryptoCodec implements Configurable {
    *         crypto codec classes with cipher suite configured.
    */
   public static CryptoCodec getInstance(Configuration conf) {
+
     String name = conf.get(HADOOP_SECURITY_CRYPTO_CIPHER_SUITE_KEY, 
         HADOOP_SECURITY_CRYPTO_CIPHER_SUITE_DEFAULT);
+    LOG.info("dog----name:"+name);
     return getInstance(conf, CipherSuite.convert(name));
   }
   

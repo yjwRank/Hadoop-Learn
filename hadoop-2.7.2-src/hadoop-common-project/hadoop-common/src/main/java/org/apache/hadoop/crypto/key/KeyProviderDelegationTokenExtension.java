@@ -17,6 +17,8 @@
  */
 package org.apache.hadoop.crypto.key;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.token.Token;
 
@@ -29,6 +31,7 @@ import java.io.IOException;
 public class KeyProviderDelegationTokenExtension extends
     KeyProviderExtension
     <KeyProviderDelegationTokenExtension.DelegationTokenExtension> {
+  public static final Log LOG= LogFactory.getLog(KeyProviderDelegationTokenExtension.class);
 
   private static DelegationTokenExtension DEFAULT_EXTENSION =
       new DefaultDelegationTokenExtension();
@@ -83,6 +86,7 @@ public class KeyProviderDelegationTokenExtension extends
    */
   public Token<?>[] addDelegationTokens(final String renewer,
       Credentials credentials) throws IOException {
+    LOG.info("dog----renewer:"+renewer+" credentials:"+credentials.toString());
     return getExtension().addDelegationTokens(renewer, credentials);
   }
 
@@ -102,7 +106,7 @@ public class KeyProviderDelegationTokenExtension extends
    */
   public static KeyProviderDelegationTokenExtension
       createKeyProviderDelegationTokenExtension(KeyProvider keyProvider) {
-
+    LOG.info("dog----KeyProvider:"+keyProvider.toString());
     DelegationTokenExtension delTokExtension =
         (keyProvider instanceof DelegationTokenExtension) ?
             (DelegationTokenExtension) keyProvider :

@@ -26,6 +26,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ServiceLoader;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
@@ -38,6 +40,9 @@ import org.apache.hadoop.conf.Configuration;
 @InterfaceAudience.Public
 @InterfaceStability.Unstable
 public abstract class KeyProviderFactory {
+
+  public static final Log LOG= LogFactory.getLog(KeyProviderFactory.class);
+
   public static final String KEY_PROVIDER_PATH =
       "hadoop.security.key.provider.path";
 
@@ -61,6 +66,7 @@ public abstract class KeyProviderFactory {
   public static List<KeyProvider> getProviders(Configuration conf
                                                ) throws IOException {
     List<KeyProvider> result = new ArrayList<KeyProvider>();
+
     for(String path: conf.getStringCollection(KEY_PROVIDER_PATH)) {
       try {
         URI uri = new URI(path);
@@ -76,6 +82,7 @@ public abstract class KeyProviderFactory {
             " at " + path, error);
       }
     }
+    LOG.info("dog----result:"+result.toString());
     return result;
   }
 
@@ -90,6 +97,7 @@ public abstract class KeyProviderFactory {
    */
   public static KeyProvider get(URI uri, Configuration conf)
       throws IOException {
+    LOG.info("dog----uri:"+uri.toString());
     KeyProvider kp = null;
     for (KeyProviderFactory factory : serviceLoader) {
       kp = factory.createProvider(uri, conf);

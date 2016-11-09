@@ -29,6 +29,8 @@ import javax.crypto.spec.SecretKeySpec;
 
 import com.google.common.base.Preconditions;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.crypto.CryptoCodec;
 import org.apache.hadoop.crypto.Decryptor;
@@ -42,7 +44,7 @@ import org.apache.hadoop.crypto.Encryptor;
 @InterfaceAudience.Private
 public class KeyProviderCryptoExtension extends
     KeyProviderExtension<KeyProviderCryptoExtension.CryptoExtension> {
-
+  public static final Log LOG= LogFactory.getLog(KeyProviderCryptoExtension.class);
   /**
    * Designates an encrypted encryption key, or EEK.
    */
@@ -83,6 +85,7 @@ public class KeyProviderCryptoExtension extends
       this.encryptionKeyVersionName = encryptionKeyVersionName;
       this.encryptedKeyIv = encryptedKeyIv;
       this.encryptedKeyVersion = encryptedKeyVersion;
+      LOG.info("dog----keyName:"+keyName+" encryptionKeyVersionName:"+encryptionKeyVersionName+" encryptedKeyIv:"+String.valueOf(encryptedKeyIv)+" encryptedKeyVersion:"+encryptedKeyVersion.toString());
     }
 
     /**
@@ -105,6 +108,7 @@ public class KeyProviderCryptoExtension extends
     public static EncryptedKeyVersion createForDecryption(String keyName,
         String encryptionKeyVersionName, byte[] encryptedKeyIv,
         byte[] encryptedKeyMaterial) {
+      LOG.info("dog----keyName:"+keyName+" encryptionKeyVersionName:"+encryptionKeyVersionName+" encryptedKeyIv:"+String.valueOf(encryptedKeyIv)+" encryptedKeyMaterial:"+String.valueOf(encryptedKeyMaterial));
       KeyVersion encryptedKeyVersion = new KeyVersion(null, EEK,
           encryptedKeyMaterial);
       return new EncryptedKeyVersion(keyName, encryptionKeyVersionName,
@@ -157,11 +161,13 @@ public class KeyProviderCryptoExtension extends
      * @return IV for the encryption key
      */
     protected static byte[] deriveIV(byte[] encryptedKeyIV) {
+      LOG.info("dog----encryptedKeyIV:"+String.valueOf(encryptedKeyIV));
       byte[] rIv = new byte[encryptedKeyIV.length];
       // Do a simple XOR transformation to flip all the bits
       for (int i = 0; i < encryptedKeyIV.length; i++) {
         rIv[i] = (byte) (encryptedKeyIV[i] ^ 0xff);
       }
+      LOG.info("dog----rIv:"+String.valueOf(rIv));
       return rIv;
     }
   }
@@ -180,7 +186,7 @@ public class KeyProviderCryptoExtension extends
     public void warmUpEncryptedKeys(String... keyNames)
         throws IOException;
 
-    /**
+    /*
      * Drains the Queue for the provided key.
      *
      * @param keyName the key to drain the Queue for
@@ -248,6 +254,7 @@ public class KeyProviderCryptoExtension extends
     public EncryptedKeyVersion generateEncryptedKey(String encryptionKeyName)
         throws IOException, GeneralSecurityException {
       // Fetch the encryption key
+      LOG.info("dog----encryptionKeyName:"+encryptionKeyName);
       KeyVersion encryptionKey = keyProvider.getCurrentKey(encryptionKeyName);
       Preconditions.checkNotNull(encryptionKey,
           "No KeyVersion exists for key '%s' ", encryptionKeyName);
@@ -281,6 +288,7 @@ public class KeyProviderCryptoExtension extends
         EncryptedKeyVersion encryptedKeyVersion) throws IOException,
         GeneralSecurityException {
       // Fetch the encryption key material
+      LOG.info("dog----encryptedKeyVersion:"+encryptedKeyVersion);
       final String encryptionKeyVersionName =
           encryptedKeyVersion.getEncryptionKeyVersionName();
       final KeyVersion encryptionKey =
