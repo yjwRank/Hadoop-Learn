@@ -96,6 +96,7 @@ public class FTPFileSystem extends FileSystem {
     super.initialize(uri, conf);
     // get host information from uri (overrides info in conf)
     String host = uri.getHost();
+    LOG.info("dog----uri:"+uri.toString()+" host:"+host);
     host = (host == null) ? conf.get(FS_FTP_HOST, null) : host;
     if (host == null) {
       throw new IOException("Invalid host specified");
@@ -114,6 +115,7 @@ public class FTPFileSystem extends FileSystem {
           .get("fs.ftp.password." + host, null));
     }
     String[] userPasswdInfo = userAndPassword.split(":");
+    LOG.info("dog----userAndPassword:"+userAndPassword+" userPasswdInfo:"+userPasswdInfo.toString());
     Preconditions.checkState(userPasswdInfo.length > 1,
                              "Invalid username / password");
     conf.set(FS_FTP_USER_PREFIX + host, userPasswdInfo[0]);
@@ -129,6 +131,7 @@ public class FTPFileSystem extends FileSystem {
    * @throws IOException
    */
   private FTPClient connect() throws IOException {
+
     FTPClient client = null;
     Configuration conf = getConf();
     String host = conf.get(FS_FTP_HOST);
@@ -137,6 +140,7 @@ public class FTPFileSystem extends FileSystem {
     String password = conf.get(FS_FTP_PASSWORD_PREFIX + host);
     client = new FTPClient();
     client.connect(host, port);
+    LOG.info("dog----host:"+host+" port:"+port+" user:"+user+" password:"+password);
     int reply = client.getReplyCode();
     if (!FTPReply.isPositiveCompletion(reply)) {
       throw NetUtils.wrapException(host, port,
@@ -161,6 +165,7 @@ public class FTPFileSystem extends FileSystem {
    * @throws IOException
    */
   private void disconnect(FTPClient client) throws IOException {
+    LOG.info("dog----client:"+client.toString());
     if (client != null) {
       if (!client.isConnected()) {
         throw new FTPException("Client not connected");
@@ -182,6 +187,7 @@ public class FTPFileSystem extends FileSystem {
    * @return
    */
   private Path makeAbsolute(Path workDir, Path path) {
+    LOG.info("dog----workDir:"+workDir.toString()+" path:"+path.toString());
     if (path.isAbsolute()) {
       return path;
     }
@@ -190,6 +196,7 @@ public class FTPFileSystem extends FileSystem {
 
   @Override
   public FSDataInputStream open(Path file, int bufferSize) throws IOException {
+    LOG.info("dog----file:"+file.toString()+" bufferSize:"+bufferSize);
     FTPClient client = connect();
     Path workDir = new Path(client.printWorkingDirectory());
     Path absolute = makeAbsolute(workDir, file);
@@ -231,6 +238,8 @@ public class FTPFileSystem extends FileSystem {
     final FTPClient client = connect();
     Path workDir = new Path(client.printWorkingDirectory());
     Path absolute = makeAbsolute(workDir, file);
+    LOG.info("dog----file:"+file.toString()+" permission:"+permission.toString()+" overwrite:"+overwrite+" bufferSize:"+bufferSize+" replication:"+replication+" blockSize:"+blockSize);
+    LOG.info("dog----workDir:"+workDir.toString()+" absolute:"+absolute.toString());
     FileStatus status;
     try {
       status = getFileStatus(client, file);
@@ -298,6 +307,7 @@ public class FTPFileSystem extends FileSystem {
    * @throws IOException on IO problems other than FileNotFoundException
    */
   private boolean exists(FTPClient client, Path file) throws IOException {
+    LOG.info("dog----file:"+file.toString());
     try {
       getFileStatus(client, file);
       return true;
@@ -308,9 +318,11 @@ public class FTPFileSystem extends FileSystem {
 
   @Override
   public boolean delete(Path file, boolean recursive) throws IOException {
+    LOG.info("dog----file:"+file.toString()+" recursive:"+recursive);
     FTPClient client = connect();
     try {
       boolean success = delete(client, file, recursive);
+      LOG.info("dog----success:"+success);
       return success;
     } finally {
       disconnect(client);
@@ -324,6 +336,7 @@ public class FTPFileSystem extends FileSystem {
    */
   private boolean delete(FTPClient client, Path file, boolean recursive)
       throws IOException {
+    LOG.info("dog----file:"+file.toString()+" recursive:"+recursive);
     Path workDir = new Path(client.printWorkingDirectory());
     Path absolute = makeAbsolute(workDir, file);
     String pathName = absolute.toUri().getPath();
@@ -348,6 +361,7 @@ public class FTPFileSystem extends FileSystem {
 
   private FsAction getFsAction(int accessGroup, FTPFile ftpFile) {
     FsAction action = FsAction.NONE;
+    LOG.info("dog----accessGroup:"+accessGroup);
     if (ftpFile.hasPermission(accessGroup, FTPFile.READ_PERMISSION)) {
       action.or(FsAction.READ);
     }
@@ -365,6 +379,7 @@ public class FTPFileSystem extends FileSystem {
     user = getFsAction(FTPFile.USER_ACCESS, ftpFile);
     group = getFsAction(FTPFile.GROUP_ACCESS, ftpFile);
     others = getFsAction(FTPFile.WORLD_ACCESS, ftpFile);
+    LOG.info("dog----user:"+user.toString()+" group:"+group.toString()+" others:"+others.toString());
     return new FsPermission(user, group, others);
   }
 
@@ -393,6 +408,7 @@ public class FTPFileSystem extends FileSystem {
       throws IOException {
     Path workDir = new Path(client.printWorkingDirectory());
     Path absolute = makeAbsolute(workDir, file);
+    LOG.info("dog----file:"+file.toString()+" workDir:"+workDir.toString()+" absolute:"+absolute.toString());
     FileStatus fileStat = getFileStatus(client, absolute);
     if (fileStat.isFile()) {
       return new FileStatus[] { fileStat };
@@ -427,6 +443,7 @@ public class FTPFileSystem extends FileSystem {
     Path workDir = new Path(client.printWorkingDirectory());
     Path absolute = makeAbsolute(workDir, file);
     Path parentPath = absolute.getParent();
+    LOG.info("dog----file:"+file.toString()+" workDir:"+workDir.toString()+" absolute:"+absolute.toString());
     if (parentPath == null) { // root dir
       long length = -1; // Length of root dir on server not known
       boolean isDir = true;
@@ -463,6 +480,7 @@ public class FTPFileSystem extends FileSystem {
    * @return FileStatus
    */
   private FileStatus getFileStatus(FTPFile ftpFile, Path parentPath) {
+    LOG.info("dog----ftpFile:"+ftpFile.toString()+" parentPath:"+parentPath.toString());
     long length = ftpFile.getSize();
     boolean isDir = ftpFile.isDirectory();
     int blockReplication = 1;
@@ -482,6 +500,7 @@ public class FTPFileSystem extends FileSystem {
   @Override
   public boolean mkdirs(Path file, FsPermission permission) throws IOException {
     FTPClient client = connect();
+    LOG.info("dog----file:"+file.toString()+" permission:"+permission.toString());
     try {
       boolean success = mkdirs(client, file, permission);
       return success;
@@ -501,6 +520,7 @@ public class FTPFileSystem extends FileSystem {
     Path workDir = new Path(client.printWorkingDirectory());
     Path absolute = makeAbsolute(workDir, file);
     String pathName = absolute.getName();
+    LOG.info("dog----file:"+file.toString()+" workDir:"+workDir.toString()+" absolute:"+absolute.toString());
     if (!exists(client, absolute)) {
       Path parent = absolute.getParent();
       created = (parent == null || mkdirs(client, parent, FsPermission
@@ -523,6 +543,7 @@ public class FTPFileSystem extends FileSystem {
    * the overhead of opening/closing a TCP connection.
    */
   private boolean isFile(FTPClient client, Path file) {
+    LOG.info("dog----file:"+file.toString());
     try {
       return getFileStatus(client, file).isFile();
     } catch (FileNotFoundException e) {
@@ -538,9 +559,11 @@ public class FTPFileSystem extends FileSystem {
    */
   @Override
   public boolean rename(Path src, Path dst) throws IOException {
+    LOG.info("dog----src:"+src.toString()+" dst:"+dst.toString());
     FTPClient client = connect();
     try {
       boolean success = rename(client, src, dst);
+      LOG.info("dog----success:"+success);
       return success;
     } finally {
       disconnect(client);
@@ -556,6 +579,7 @@ public class FTPFileSystem extends FileSystem {
   private boolean isParentOf(Path parent, Path child) {
     URI parentURI = parent.toUri();
     String parentPath = parentURI.getPath();
+    LOG.info("dog----parent:"+parent.toString()+" child:"+child.toString()+" parentPath:"+parentPath);
     if (!parentPath.endsWith("/")) {
       parentPath += "/";
     }
@@ -580,6 +604,7 @@ public class FTPFileSystem extends FileSystem {
     Path workDir = new Path(client.printWorkingDirectory());
     Path absoluteSrc = makeAbsolute(workDir, src);
     Path absoluteDst = makeAbsolute(workDir, dst);
+    LOG.info("dog----src:"+src.toString()+" dst:"+dst.toString()+" client:"+client.toString());
     if (!exists(client, absoluteSrc)) {
       throw new FileNotFoundException("Source path " + src + " does not exist");
     }

@@ -20,6 +20,8 @@ package org.apache.hadoop.fs.ftp;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
@@ -30,6 +32,8 @@ import org.apache.hadoop.fs.FileSystem;
 @InterfaceStability.Unstable
 public class FTPInputStream extends FSInputStream {
 
+  public static final Log LOG= LogFactory.getLog(FTPInputStream.class);
+
   InputStream wrappedStream;
   FTPClient client;
   FileSystem.Statistics stats;
@@ -38,6 +42,7 @@ public class FTPInputStream extends FSInputStream {
 
   public FTPInputStream(InputStream stream, FTPClient client,
       FileSystem.Statistics stats) {
+    LOG.info("dog----constructor:");
     if (stream == null) {
       throw new IllegalArgumentException("Null InputStream");
     }
